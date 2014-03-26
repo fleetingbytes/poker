@@ -7,7 +7,7 @@ import random
 # TODO:
 # seat the players at the table etc.
 # Nagi's avatar on github
-# found out how to save password in GitHub
+# Testing password management
 
 # Requirements
 # Comparison table for pocket cards strength. (for 2-9 players)
