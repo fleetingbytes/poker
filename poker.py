@@ -2,7 +2,11 @@
 # -*- coding: UTF_8 -*-
 
 from enum import Enum
-import random, copy
+import random
+
+# TODO:
+# seat the players at the table etc.
+
 
 # Requirements
 # Comparison table for pocket cards strength. (for 2-9 players)
