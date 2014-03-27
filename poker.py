@@ -3,6 +3,7 @@
 
 from enum import Enum
 import random
+# from lib import rndint # needed for true random shuffle of the deck of cards
 
 # TODO:
 # seat the players at the table etc.
@@ -123,14 +124,22 @@ class Deck:
         # shufflingSequence is a list of shuffling methods, e.g. [wash, riffle, riffle, box, riffle, cut]
         for method in shufflingSequence:
             self.shuffl(self.cards)
+    def randomOrgShuffle(self):
+        # Seed Random Generator with true Random Value ans shuffle list
+        # random.seed(rndint.get(0, len(self.cards), 1).pop())
+        # random.shuffle(self.cards)
+        # rndint.get function reference: https://code.google.com/p/pyrndorg/source/browse/trunk/rndint.py?r=2
+        pass
     def deal(self, player):
         player.giveCard(self.cards.pop())
 
 class Player():
-    def __init__(self, playerName, brain):
+    def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
         self.name = playerName
         self.brain = brain
         self.cards = set()
+        self.wantsToJoinAGame = wantsToJoinAGame
+        self.wantsToLeaveAGame = wantsToLeaveAGame
     def giveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
@@ -143,7 +152,6 @@ class Player():
         return self.pocketCards()[0].value == self.pocketCards()[1].value
     def suitedCards(self):
         return self.pocketCards()[0].color == self.pocketCards()[1].color
-
 
 #next:
 # Class Hand(listOfPlayers)
@@ -173,26 +181,65 @@ class Hand():
         print("* Collect the cards to the deck.")
 
 class Game():
-    """All steps of a game (series of Hands) are run by this class"""
-    def __init__(self, setOfPlayers, numberOfSeats, numberOfHands):
-        # number of players potentially involved in this game
-        self.setOfPlayers = setOfPlayers
-        # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
-        self.seats = dict(map(lambda x: (x + 1, None), range(len(setOfPlayers))))
+    """Currently it incorporates the rules of Texas Hold'em. We can later have a Rules() class which's instance can be given to either Game() or Dealer() to tell them how the game should be run.
+    The game will also have an endGameCondition (as an instance of Condition()) to tell when this game ends.
+    Right now this is simplified to a given numberOfHands which are played and then the game is over."""
+    def __init__(self, numberOfHands):
+        # number of hands is a preliminary construct, until we have implemented the custom endGameConditions properly.
+        # until then, the game ends when a certain number of hands have been played.
         self.numberOfHands = numberOfHands
-    def mapPlayersToSeats(self):
-        # later, we can have a comples players seating function here, for now, we'll just seat them in the order in which they are pulled out of the set
-        # we will want this function to check how many empty seats are there before a Hand is played. That many players may join the game for the next hand.
-        for (player, seatNumber) in zip(self.setOfPlayers, self.seats.keys()):
+
+class Dealer():
+    """dealer who runs the game of poker (tells whose turn is it), deals the cards to players and manages the pot at a table."""
+    def __init__(self, deck):
+        self.deck = deck
+
+class Table():
+    """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
+    It also inherently has a dealer who deals the cards to players and manages the pot."""
+    def __init__(self, numberOfSeats, dealer, game, setOfPlayers):
+        self.numberOfSeats = numberOfSeats
+        self.dealer = dealer
+        self.game = game
+        # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
+        self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
+        self.setOfPlayers = setOfPlayers
+    def invitePlayers(self):
+        """This function maps players who want to join a game to a free seat at the table."""
+        # later, we can have a complex players seating function here, for now, we'll just seat them in the order in which they are pulled out of the set
+        # This wil check how many empty seats are there before a Hand is played. That many players may join the game for the next hand.
+        setOfEmptySeats = set()
+        for key, value in self.seats.items():
+            if value is None:
+                setOfEmptySeats.add(key)
+        # from the set of all players we make a list of players who want to join a game.
+        listOfPlayersToJoinAGame = list()
+        for player in self.setOfPlayers:
+            if player.wantsToJoinAGame:
+                listOfPlayersToJoinAGame.append(player)
+        # since we want the players to be seated at the table randomly, we will shuffle this list
+        random.shuffle(listOfPlayersToJoinAGame)
+        for (player, seatNumber) in zip(listOfPlayersToJoinAGame, setOfEmptySeats):
             self.seats[seatNumber] = player
-    def playHands(self):
-        for n in range(self.numberOfHands):
-            print("* Checking for empty seats at the table and seating players who want to play.")
+            # Once a player has joined a game, he no longer wants to join one.
+            player.wantsToJoinAGame = False
+            print("*** Player", player.name, "sits at seat", seatNumber)
+    def letPlayersGo(self):
+        pass
+    def playGame(self):
+        print("* A game is played.")
+        for hand in range(self.game.numberOfHands):
+            # Check for empty seats at the table and seat the players.
+            print("** Checking whether any players want to join the game.")
+            self.invitePlayers()
             # create a hand
             hand = Hand()
             # play the hand
+            print("** A hand is played.")
             hand.playAHand()
-
+            # Temporarily, the players decide randomly whether they want to leave the table or not.
+            print("** Checking whether any players want to leave the game.")
+        print("* The game is over and the players leave the table.")
 
 ####################
 ## ACTUAL PROGRAM ##
@@ -201,29 +248,30 @@ class Game():
 # create a deck of cards
 deckOfCards = Deck()
 
+# create a dealer and give him the deck of cards.
+dealer = Dealer(deckOfCards)
+
+# create a set of players interested in a game of poker at a particular table
+setOfPlayers = set()
+
 # create players
-Bob = Player("Bob", "all")
-Bob.giveCard(d.H8)
-Bob.giveCard(d.C8)
-Bob.pocketPair()
-Bob.suitedCards()
-Quinn = Player("Quinn", "all")
-Quinn.giveCard(d.HT)
-Quinn.giveCard(d.HJ)
-Quinn.pocketPair()
-Quinn.suitedCards()
-
-# create a set of players
-setOfPlayers = set([Bob, Quinn])
-
-# define the number of seats at the poker table
-numberOfSeats = 9
+setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+for name in setOfPlayerNames:
+    setOfPlayers.add(Player(name, "all"))
 
 # define the number of hands to be played
 numberOfHands = 4
 
 # create game
-game = Game(setOfPlayers, numberOfSeats, numberOfHands)
+game = Game(numberOfHands)
+
+# define the number of seats at the poker table
+numberOfSeats = 9
+
+
+# create a table
+table = Table(numberOfSeats, dealer, game, setOfPlayers)
 
 # run the game
-game.playHands()
+table.playGame()
+
