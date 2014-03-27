@@ -2,7 +2,9 @@
 # -*- coding: UTF_8 -*-
 
 from enum import Enum
+from lib import rndint
 import random
+
 
 # TODO:
 # seat the players at the table etc.
@@ -112,6 +114,9 @@ class Deck:
         self.C3 = Card(CardValue.trey, CardColor.clubs)
         self.C2 = Card(CardValue.deuce, CardColor.clubs)
         self.cards = list((self.SA, self.SK, self.SQ, self.SJ, self.ST, self.S9, self.S8, self.S7, self.S6, self.S5, self.S4, self.S3, self.S2, self.HA, self.HK, self.HQ, self.HJ, self.HT, self.H9, self.H8, self.H7, self.H6, self.H5, self.H4, self.H3, self.H2, self.DA, self.DK, self.DQ, self.DJ, self.DT, self.D9, self.D8, self.D7, self.D6, self.D5, self.D4, self.D3, self.D2, self.CA, self.CK, self.CQ, self.CJ, self.CT, self.C9, self.C8, self.C7, self.C6, self.C5, self.C4, self.C3, self.C2))
+        # Seed Random Generator with true Random Value ans shuffle list
+        random.seed(rndint.get(0, len(self.cards), 1).pop())
+        random.shuffle(self.cards)
     def __call__(self, parameter="short"):
         listOfCards = list()
         for card in self.cards:
@@ -200,16 +205,15 @@ class Game():
 
 # create a deck of cards
 deckOfCards = Deck()
-
 # create players
 Bob = Player("Bob", "all")
-Bob.giveCard(d.H8)
-Bob.giveCard(d.C8)
+Bob.giveCard(deckOfCards.H8)
+Bob.giveCard(deckOfCards.C8)
 Bob.pocketPair()
 Bob.suitedCards()
 Quinn = Player("Quinn", "all")
-Quinn.giveCard(d.HT)
-Quinn.giveCard(d.HJ)
+Quinn.giveCard(deckOfCards.HT)
+Quinn.giveCard(deckOfCards.HJ)
 Quinn.pocketPair()
 Quinn.suitedCards()
 
