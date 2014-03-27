@@ -245,10 +245,33 @@ class Hands:
                 increment += 1
             return (value,int(Straight[4]))
         
-        #TODO create the if tree that checks each function untill it finds the hand                                    
-        return Straight(CheckCard)
+        #TODO Add highcard tiebreak
+        def flush (CheckCard):
+            CardSequncelist = []
+            value = 0
+            for Card in CheckCard:
+                CardSequncelist.append(Card[1])
+            
+            print(CardSequncelist)
+            
+            #check
+            if(CardSequncelist.count('S') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('H') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('D') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('C') >= 5 ):
+                value = 5
+            #elif()
         
-    
+            return(value)
+            
+        #TODO create the if tree that checks each function untill it finds the hand                                    
+        return flush(CheckCard)
+            
+        
+            
     
 class Player():
     def __init__(self, playerName, brain):
