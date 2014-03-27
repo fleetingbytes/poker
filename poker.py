@@ -170,29 +170,33 @@ class Hands:
                     highcard = Card[0]
             return highcard
         
-        #find pair and 2 pair returns the value of the hand (pair = 1, 2 pair = 2 3 of a kind = 3)
+        #find pair and 2  3 of a kind and full house returns the value of the hand (pair = 1, 2 pair = 2, 3 of a kind = 3, FullHouse = 6)
         def SimilarCards(CheckCard):
-            NumberOfPairs = 0
-            highcard = 0 
-            FindCount = 0         
-            for Card in CheckCard:
-                for SecondCard in CheckCard:
-                    #if the first card == the second card and this we have found a pair increase the number of pairs and set the highcard
-                    #we count how many times we find a pair because it will find itself so only on the 2nd find will it be an atchuall pair
-                    if(Card[0] == SecondCard[0] and FindCount == 1):
-                        CheckCard.remove(SecondCard)
-                        NumberOfPairs += 1
-                    if(Card[0] == SecondCard[0] and FindCount == 2):
-                        CheckCard.remove(SecondCard)
-                        NumberOfPairs += 1
-                    #if it has found a match but FindCount is at 0 it means it has found itself
-                    elif(Card[0] == SecondCard[0]):
-                        FindCount += 1
-                #reset find count for thr next cycle
-                FindCount = 0
+            CardValues = []
+            Pairs = []
+            ThreeOfAKind = 0
+            Value = 0
+            
+            for x in range(7):
+                CardValues.append(CheckCard[x][0])
+            
+            for x in range(13):
+                if (CardValues.count(x) == 2):
+                    Pairs.append(x)
+                elif (CardValues.count(x) == 3):
+                    ThreeOfAKind += 1   
+            if (len(Pairs) == 1):
+                Value = 1
+            if (len(Pairs) == 2):
+                Value = 2
+            if (ThreeOfAKind == 1):
+                Value = 3
+            if (len(Pairs) == 1 and ThreeOfAKind == 1):
+                Value = 6
+            if (ThreeOfAKind > 1 ):
+                Value = 6
                 
-            #set the hand value to the number of pairs as a 1 pair has a value of 1 and a 2 pair has a value of 2
-            return NumberOfPairs
+            return Value
         
         #returns 4 and the high card as x,y if their is a stright else returns 0
         def Straight(CheckCard):
@@ -268,7 +272,7 @@ class Hands:
             return(value)
             
         #TODO create the if tree that checks each function untill it finds the hand                                    
-        return flush(CheckCard)
+        return SimilarCards(CheckCard)
             
         
             
@@ -375,6 +379,6 @@ game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 # run the game
 #game.playHands()
 
-handscheck = Hands.Check(deckOfCards.H9, deckOfCards.H2, deckOfCards.H3, deckOfCards.H4, deckOfCards.H5, deckOfCards.H6, deckOfCards.H7)
+handscheck = Hands.Check(deckOfCards.H6, deckOfCards.H6, deckOfCards.H3, deckOfCards.H3, deckOfCards.H2, deckOfCards.H6, deckOfCards.H7)
 
 print (handscheck)
