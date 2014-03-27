@@ -170,11 +170,14 @@ class Hands:
                     highcard = Card[0]
             return highcard
         
-        #find pair and 2  3 of a kind and full house returns the value of the hand (pair = 1, 2 pair = 2, 3 of a kind = 3, FullHouse = 6)
+        #find pair, three of a kind, full house and four of a kind returns the value of the hand 
+        #(pair = 1, 2 pair = 2, 3 of a kind = 3, FullHouse = 6, Four Of A Kind 7)
+        #TODO add highcard/Tiebreak
         def SimilarCards(CheckCard):
             CardValues = []
             Pairs = []
             ThreeOfAKind = 0
+            FourOfAKind = 0
             Value = 0
             
             for x in range(7):
@@ -184,7 +187,9 @@ class Hands:
                 if (CardValues.count(x) == 2):
                     Pairs.append(x)
                 elif (CardValues.count(x) == 3):
-                    ThreeOfAKind += 1   
+                    ThreeOfAKind += 1
+                elif (CardValues.count(x) == 4):
+                    FourOfAKind += 1   
             if (len(Pairs) == 1):
                 Value = 1
             if (len(Pairs) == 2):
@@ -195,10 +200,12 @@ class Hands:
                 Value = 6
             if (ThreeOfAKind > 1 ):
                 Value = 6
+            if (FourOfAKind > 0):
+                Value = 7
                 
             return Value
         
-        #returns 4 and the high card as x,y if their is a stright else returns 0
+        #returns 4 if their is a stright else returns 0
         def Straight(CheckCard):
             #sort all the cards values into an list and sort that list
             CardSequncelist = []
@@ -247,16 +254,14 @@ class Hands:
                     value =  4
                     Straight = CardSequnce[0+increment:5+increment]
                 increment += 1
-            return (value,int(Straight[4]))
+            return (value)
         
         #TODO Add highcard tiebreak
-        def flush (CheckCard):
+        def Flush (CheckCard):
             CardSequncelist = []
             value = 0
             for Card in CheckCard:
                 CardSequncelist.append(Card[1])
-            
-            print(CardSequncelist)
             
             #check
             if(CardSequncelist.count('S') >= 5 ):
@@ -270,11 +275,31 @@ class Hands:
             #elif()
         
             return(value)
-            
-        #TODO create the if tree that checks each function untill it finds the hand                                    
-        return SimilarCards(CheckCard)
-            
         
+        #######################################
+        #If statment tree to return the hand
+        Straight = int(Straight(CheckCard))
+        Flush = int(Flush(CheckCard))
+        SimilarCards = int(SimilarCards(CheckCard))
+        #check for Straight Flush
+        if (Straight != 0 and Flush != 0):
+            return 8
+        elif (SimilarCards == 7):
+            return 7
+        elif (SimilarCards == 6):
+            return 6
+        elif (Flush != 0):
+            return 5
+        elif (Straight != 0):
+            return 4
+        elif (SimilarCards == 3):
+            return 3
+        elif (SimilarCards == 2):
+            return 2
+        elif (SimilarCards == 1):
+            return 1
+        else:
+            return 0
             
     
 class Player():
@@ -379,6 +404,6 @@ game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 # run the game
 #game.playHands()
 
-handscheck = Hands.Check(deckOfCards.H6, deckOfCards.H6, deckOfCards.H3, deckOfCards.H3, deckOfCards.H2, deckOfCards.H6, deckOfCards.H7)
+handscheck = Hands.Check(deckOfCards.H3, deckOfCards.H3, deckOfCards.H4, deckOfCards.H4, deckOfCards.H2, deckOfCards.H6, deckOfCards.H7)
 
 print (handscheck)
