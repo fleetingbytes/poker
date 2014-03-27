@@ -203,13 +203,13 @@ deckOfCards = Deck()
 
 # create players
 Bob = Player("Bob", "all")
-Bob.giveCard(d.H8)
-Bob.giveCard(d.C8)
+Bob.giveCard(deckOfCards.H8)
+Bob.giveCard(deckOfCards.C8)
 Bob.pocketPair()
 Bob.suitedCards()
 Quinn = Player("Quinn", "all")
-Quinn.giveCard(d.HT)
-Quinn.giveCard(d.HJ)
+Quinn.giveCard(deckOfCards.HT)
+Quinn.giveCard(deckOfCards.HJ)
 Quinn.pocketPair()
 Quinn.suitedCards()
 
