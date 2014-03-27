@@ -133,7 +133,7 @@ class Hands:
     value = 0
     highcard = 0
     NumberOfPairs = 0
-    
+       
     ##pass this function all the cards the player has acces to its hand and the river and it will return the value of the hand and the value of the high card
     ##returned values are "ValueOfHand,ValueOfHighCard"  
     def Check (Card0,Card1,Card2,Card3,Card4,Card5,Card6):
@@ -143,7 +143,7 @@ class Hands:
         for x in range(7):
             CheckCard.append([])
         
-            
+        #TODO Convert Picture cards values to ints    
         #CheckCard[n][0] == the cards value CheckCard[n][1] == the cards color        
         CheckCard[0].append(int(Card0()[0]))
         CheckCard[0].append(Card0()[1])
@@ -159,8 +159,6 @@ class Hands:
         CheckCard[5].append(Card5()[1])
         CheckCard[6].append(int(Card6()[0]))
         CheckCard[6].append(Card6()[1])
-        
-        print (CheckCard)
 
         #all the possible hands are created here and should not be ran individually insead run Check
         
@@ -196,8 +194,61 @@ class Hands:
             #set the hand value to the number of pairs as a 1 pair has a value of 1 and a 2 pair has a value of 2
             return NumberOfPairs
         
+        #returns 4 and the high card as x,y if their is a stright else returns 0
+        def Straight(CheckCard):
+            #sort all the cards values into an list and sort that list
+            CardSequncelist = []
+            CardSequnce = 0
+            ComparisonSequncelist = []
+            value = 0
+            Straight = 0
+            for Card in CheckCard:                
+                # add the ace to the start of the sqence aswell as the end
+                if (Card[0] == 13):
+                    CardSequncelist.insert(0,0)
+                CardSequncelist.append(Card[0])
+                
+            ##remove duplicate cards
+            CardSequncelist = list(set(CardSequncelist))
+            CardSequncelist.sort()
+            
+            #make the list a simple sequnce for easy comparison
+            for card in CardSequncelist:
+                if (CardSequnce == 0):
+                    CardSequnce = str(card)
+                else:
+                    CardSequnce = CardSequnce+str(card)
+            
+            increment = 0
+            
+            #create the list to hold the comparision lists
+            for x in range(len(CardSequnce)-4):
+                ComparisonSequncelist.append(0)
+            
+            #create the comparision lists themselves 
+            while increment != (len(CardSequnce)-4):                
+                incriment2 = 0
+                while incriment2 != 5:
+                    if (str(ComparisonSequncelist[increment]) == "0"):                
+                        ComparisonSequncelist[increment] = str(int(CardSequnce[increment])+incriment2)
+                    else:
+                        ComparisonSequncelist[increment] = str(ComparisonSequncelist[increment])+str(int(CardSequnce[increment])+incriment2)
+                    incriment2 += 1
+                increment += 1
+            increment = 0
+            
+            #Compaire
+            while increment != (len(CardSequnce)-4):
+                if(str(ComparisonSequncelist[increment]) == CardSequnce[0+increment:5+increment]):
+                    value =  4
+                    Straight = CardSequnce[0+increment:5+increment]
+                increment += 1
+            return (value,int(Straight[4]))
+        
         #TODO create the if tree that checks each function untill it finds the hand                                    
-        return SimilarCards(CheckCard)
+        return Straight(CheckCard)
+        
+    
     
 class Player():
     def __init__(self, playerName, brain):
@@ -299,8 +350,8 @@ numberOfHands = 4
 game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 
 # run the game
-game.playHands()
+#game.playHands()
 
-handscheck = Hands.Check(deckOfCards.H8, deckOfCards.H8, deckOfCards.H8, deckOfCards.H9, deckOfCards.H9, deckOfCards.H3, deckOfCards.H4)
+handscheck = Hands.Check(deckOfCards.H9, deckOfCards.H2, deckOfCards.H3, deckOfCards.H4, deckOfCards.H5, deckOfCards.H6, deckOfCards.H7)
 
 print (handscheck)
