@@ -1,1 +1,1 @@
-﻿#!/usr/bin/python# -*- coding: UTF_8 -*-def allIn():    
+﻿#!/usr/bin/python# -*- coding: UTF_8 -*-import randomclass allIn():    """This is temporarily something which will make a player randomly leave a table."""    def __init__(self, wantToJoinAGame=True, wantToLeaveTheTable=False)        self.wantToJoinAGame = wantToJoinAGame        self.wantToLeaveTheTable = wantToLeaveTheTable        
