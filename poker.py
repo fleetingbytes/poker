@@ -7,9 +7,7 @@ from lib import rndint # needed for true random shuffle of the deck of cards
 import brain as b
 
 # TODO:
-# seat the players at the table etc.
 # Nagi's avatar on github
-# Testing password management
 
 # Requirements
 # Comparison table for pocket cards strength. (for 2-9 players)
@@ -292,7 +290,6 @@ game = Game(numberOfHands)
 
 # define the number of seats at the poker table
 numberOfSeats = 9
-
 
 # create a table
 table = Table(numberOfSeats, dealer, game, setOfPlayers)
