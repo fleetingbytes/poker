@@ -5,6 +5,7 @@ from enum import Enum
 from lib import rndint
 import random
 from lib import rndint # needed for true random shuffle of the deck of cards
+from lib import rndseq # needed for true random shuffle of the deck of cards
 import brain as b
 
 
@@ -275,26 +276,9 @@ class Table():
 
 # create a deck of cards
 deckOfCards = Deck()
-<<<<<<< HEAD
-# create players
-Bob = Player("Bob", "all")
-Bob.giveCard(deckOfCards.H8)
-Bob.giveCard(deckOfCards.C8)
-Bob.pocketPair()
-Bob.suitedCards()
-Quinn = Player("Quinn", "all")
-Quinn.giveCard(deckOfCards.HT)
-Quinn.giveCard(deckOfCards.HJ)
-Quinn.pocketPair()
-Quinn.suitedCards()
-
-# create a set of players
-setOfPlayers = set([Bob, Quinn])
-=======
 
 # create a dealer and give him the deck of cards.
 dealer = Dealer(deckOfCards)
->>>>>>> remotes/upstream/master
 
 # create a set of players interested in a game of poker at a particular table
 setOfPlayers = set()
@@ -318,4 +302,3 @@ table = Table(numberOfSeats, dealer, game, setOfPlayers)
 
 # run the game
 table.playGame()
-
