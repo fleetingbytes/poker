@@ -3,7 +3,7 @@
 
 from enum import Enum
 import random
-# from lib import rndint # needed for true random shuffle of the deck of cards
+from lib import rndint # needed for true random shuffle of the deck of cards
 
 # TODO:
 # seat the players at the table etc.
