@@ -126,6 +126,182 @@ class Deck:
     def deal(self, player):
         player.giveCard(self.cards.pop())
 
+##Possible Hands
+##this class will check what the value of the players hand is
+class Hands:
+    #variable decliration
+    value = 0
+    highcard = 0
+    NumberOfPairs = 0
+       
+    ##pass this function all the cards the player has acces to its hand and the river and it will return the value of the hand and the value of the high card
+    ##returned values are "ValueOfHand,ValueOfHighCard"  
+    def Check (Card0,Card1,Card2,Card3,Card4,Card5,Card6):
+        ##converting the input to a list in probely doing it a dumb way not sure how else though - dsgreat
+        CheckCard = []
+        
+        for x in range(7):
+            CheckCard.append([])
+        
+        #TODO Convert Picture cards values to ints    
+        #CheckCard[n][0] == the cards value CheckCard[n][1] == the cards color        
+        CheckCard[0].append(int(Card0()[0]))
+        CheckCard[0].append(Card0()[1])
+        CheckCard[1].append(int(Card1()[0]))
+        CheckCard[1].append(Card1()[1])
+        CheckCard[2].append(int(Card2()[0]))
+        CheckCard[2].append(Card2()[1])
+        CheckCard[3].append(int(Card3()[0]))
+        CheckCard[3].append(Card3()[1])
+        CheckCard[4].append(int(Card4()[0]))
+        CheckCard[4].append(Card4()[1])
+        CheckCard[5].append(int(Card5()[0]))
+        CheckCard[5].append(Card5()[1])
+        CheckCard[6].append(int(Card6()[0]))
+        CheckCard[6].append(Card6()[1])
+
+        #all the possible hands are created here and should not be ran individually insead run Check
+        
+        #find high card
+        def highcard (CheckCard):
+            highcard = 0
+            for Card in CheckCard:
+                if (Card[0] > highcard):
+                    highcard = Card[0]
+            return highcard
+        
+        #find pair, three of a kind, full house and four of a kind returns the value of the hand 
+        #(pair = 1, 2 pair = 2, 3 of a kind = 3, FullHouse = 6, Four Of A Kind 7)
+        #TODO add highcard/Tiebreak
+        def SimilarCards(CheckCard):
+            CardValues = []
+            Pairs = []
+            ThreeOfAKind = 0
+            FourOfAKind = 0
+            Value = 0
+            
+            for x in range(7):
+                CardValues.append(CheckCard[x][0])
+            
+            for x in range(13):
+                if (CardValues.count(x) == 2):
+                    Pairs.append(x)
+                elif (CardValues.count(x) == 3):
+                    ThreeOfAKind += 1
+                elif (CardValues.count(x) == 4):
+                    FourOfAKind += 1   
+            if (len(Pairs) == 1):
+                Value = 1
+            if (len(Pairs) == 2):
+                Value = 2
+            if (ThreeOfAKind == 1):
+                Value = 3
+            if (len(Pairs) == 1 and ThreeOfAKind == 1):
+                Value = 6
+            if (ThreeOfAKind > 1 ):
+                Value = 6
+            if (FourOfAKind > 0):
+                Value = 7
+                
+            return Value
+        
+        #returns 4 if their is a stright else returns 0
+        def Straight(CheckCard):
+            #sort all the cards values into an list and sort that list
+            CardSequncelist = []
+            CardSequnce = 0
+            ComparisonSequncelist = []
+            value = 0
+            Straight = 0
+            for Card in CheckCard:                
+                # add the ace to the start of the sqence aswell as the end
+                if (Card[0] == 13):
+                    CardSequncelist.insert(0,0)
+                CardSequncelist.append(Card[0])
+                
+            ##remove duplicate cards
+            CardSequncelist = list(set(CardSequncelist))
+            CardSequncelist.sort()
+            
+            #make the list a simple sequnce for easy comparison
+            for card in CardSequncelist:
+                if (CardSequnce == 0):
+                    CardSequnce = str(card)
+                else:
+                    CardSequnce = CardSequnce+str(card)
+            
+            increment = 0
+            
+            #create the list to hold the comparision lists
+            for x in range(len(CardSequnce)-4):
+                ComparisonSequncelist.append(0)
+            
+            #create the comparision lists themselves 
+            while increment != (len(CardSequnce)-4):                
+                incriment2 = 0
+                while incriment2 != 5:
+                    if (str(ComparisonSequncelist[increment]) == "0"):                
+                        ComparisonSequncelist[increment] = str(int(CardSequnce[increment])+incriment2)
+                    else:
+                        ComparisonSequncelist[increment] = str(ComparisonSequncelist[increment])+str(int(CardSequnce[increment])+incriment2)
+                    incriment2 += 1
+                increment += 1
+            increment = 0
+            
+            #Compaire
+            while increment != (len(CardSequnce)-4):
+                if(str(ComparisonSequncelist[increment]) == CardSequnce[0+increment:5+increment]):
+                    value =  4
+                    Straight = CardSequnce[0+increment:5+increment]
+                increment += 1
+            return (value)
+        
+        #TODO Add highcard tiebreak
+        def Flush (CheckCard):
+            CardSequncelist = []
+            value = 0
+            for Card in CheckCard:
+                CardSequncelist.append(Card[1])
+            
+            #check
+            if(CardSequncelist.count('S') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('H') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('D') >= 5 ):
+                value = 5
+            elif(CardSequncelist.count('C') >= 5 ):
+                value = 5
+            #elif()
+        
+            return(value)
+        
+        #######################################
+        #If statment tree to return the hand
+        Straight = int(Straight(CheckCard))
+        Flush = int(Flush(CheckCard))
+        SimilarCards = int(SimilarCards(CheckCard))
+        #check for Straight Flush
+        if (Straight != 0 and Flush != 0):
+            return 8
+        elif (SimilarCards == 7):
+            return 7
+        elif (SimilarCards == 6):
+            return 6
+        elif (Flush != 0):
+            return 5
+        elif (Straight != 0):
+            return 4
+        elif (SimilarCards == 3):
+            return 3
+        elif (SimilarCards == 2):
+            return 2
+        elif (SimilarCards == 1):
+            return 1
+        else:
+            return 0
+            
+    
 class Player():
     def __init__(self, playerName, brain):
         self.name = playerName
@@ -152,7 +328,7 @@ class Hand():
     """All steps of a hand of poker will be run by this class"""
     def __init__(self):
         pass
-    def whoIsTheButton(listOfPlayers):
+    def whoIsTheButton(self,listOfPlayers):
         pass
     def playAHand(self):
         print("**** A NEW HAND STARTS ****")
@@ -203,13 +379,13 @@ deckOfCards = Deck()
 
 # create players
 Bob = Player("Bob", "all")
-Bob.giveCard(d.H8)
-Bob.giveCard(d.C8)
+Bob.giveCard(deckOfCards.H8)
+Bob.giveCard(deckOfCards.C8)
 Bob.pocketPair()
 Bob.suitedCards()
 Quinn = Player("Quinn", "all")
-Quinn.giveCard(d.HT)
-Quinn.giveCard(d.HJ)
+Quinn.giveCard(deckOfCards.HT)
+Quinn.giveCard(deckOfCards.HJ)
 Quinn.pocketPair()
 Quinn.suitedCards()
 
@@ -226,4 +402,8 @@ numberOfHands = 4
 game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 
 # run the game
-game.playHands()
+#game.playHands()
+
+handscheck = Hands.Check(deckOfCards.H3, deckOfCards.H3, deckOfCards.H4, deckOfCards.H4, deckOfCards.H2, deckOfCards.H6, deckOfCards.H7)
+
+print (handscheck)
