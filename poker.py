@@ -126,6 +126,53 @@ class Deck:
     def deal(self, player):
         player.giveCard(self.cards.pop())
 
+##Possible Hands
+##this class will check what the value of the players hand is
+class Hands:
+    #variable decliration
+    value = 0
+    highcard = 0
+    NumberOfPairs = 0
+    
+    ##pass this function all the cards the player has acces to its hand and the river and it will return the value of the hand and the value of the high card
+    ##returned values are "ValueOfHand,ValueOfHighCard"  
+    def Check (Card0,Card1,Card2,Card3,Card4,Card5,Card6):
+        ##converting the input to a list in probely doing it a dumb way not sure how else though - dsgreat
+        CheckCard = []
+        
+        CheckCard.append(Card0)
+        CheckCard.append(Card1)
+        CheckCard.append(Card2)
+        CheckCard.append(Card3)
+        CheckCard.append(Card4)
+        CheckCard.append(Card5)
+        CheckCard.append(Card6)
+
+        #all the possible hands are created here and should not be ran individually insead run Check
+        def SimilarCards(CheckCard):
+            NumberOfPairs = 0
+            highcard = 0 
+            FindCount = 0         
+            for Card in CheckCard:
+                for SecondCard in CheckCard:
+                    #if the first card == the second card and this we have found a pair increase the number of pairs and set the highcard
+                    #we count how many times we find a pair because it will find itself so only on the 2nd find will it be an atchuall pair
+                    if(Card()[0] == SecondCard()[0] and FindCount == 1):
+                        if (int(Card()[0]) > highcard):
+                            highcard = int(Card()[0])
+                        CheckCard.remove(SecondCard)
+                        NumberOfPairs += 1
+                    #if it has found a match but FindCount is at 0 it means it has found itself
+                    elif(Card()[0] == SecondCard()[0]):
+                        FindCount += 1
+                #reset find count for thr next cycle
+                FindCount = 0
+                
+            #set the hand value to the number of pairs as a 1 pair has a value of 1 and a 2 pair has a value of 2
+            return str(NumberOfPairs) +"," + str(highcard)
+                                           
+        return SimilarCards(CheckCard)
+    
 class Player():
     def __init__(self, playerName, brain):
         self.name = playerName
@@ -227,3 +274,7 @@ game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 
 # run the game
 game.playHands()
+
+handscheck = Hands.Check(deckOfCards.H8, deckOfCards.H8, deckOfCards.H9, deckOfCards.H9, deckOfCards.H2, deckOfCards.H3, deckOfCards.H4)
+
+print (handscheck)
