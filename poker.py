@@ -140,13 +140,27 @@ class Hands:
         ##converting the input to a list in probely doing it a dumb way not sure how else though - dsgreat
         CheckCard = []
         
-        CheckCard.append(Card0)
-        CheckCard.append(Card1)
-        CheckCard.append(Card2)
-        CheckCard.append(Card3)
-        CheckCard.append(Card4)
-        CheckCard.append(Card5)
-        CheckCard.append(Card6)
+        for x in range(7):
+            CheckCard.append([])
+        
+            
+        #CheckCard[n][0] == the cards value CheckCard[n][1] == the cards color        
+        CheckCard[0].append(int(Card0()[0]))
+        CheckCard[0].append(Card0()[1])
+        CheckCard[1].append(int(Card1()[0]))
+        CheckCard[1].append(Card1()[1])
+        CheckCard[2].append(int(Card2()[0]))
+        CheckCard[2].append(Card2()[1])
+        CheckCard[3].append(int(Card3()[0]))
+        CheckCard[3].append(Card3()[1])
+        CheckCard[4].append(int(Card4()[0]))
+        CheckCard[4].append(Card4()[1])
+        CheckCard[5].append(int(Card5()[0]))
+        CheckCard[5].append(Card5()[1])
+        CheckCard[6].append(int(Card6()[0]))
+        CheckCard[6].append(Card6()[1])
+        
+        print (CheckCard)
 
         #all the possible hands are created here and should not be ran individually insead run Check
         
@@ -154,8 +168,8 @@ class Hands:
         def highcard (CheckCard):
             highcard = 0
             for Card in CheckCard:
-                if (int(Card()[0]) > highcard):
-                    highcard = int(Card()[0])
+                if (Card[0] > highcard):
+                    highcard = Card[0]
             return highcard
         
         #find pair and 2 pair returns the value of the hand (pair = 1, 2 pair = 2 3 of a kind = 3)
@@ -167,14 +181,14 @@ class Hands:
                 for SecondCard in CheckCard:
                     #if the first card == the second card and this we have found a pair increase the number of pairs and set the highcard
                     #we count how many times we find a pair because it will find itself so only on the 2nd find will it be an atchuall pair
-                    if(Card()[0] == SecondCard()[0] and FindCount == 1):
+                    if(Card[0] == SecondCard[0] and FindCount == 1):
                         CheckCard.remove(SecondCard)
                         NumberOfPairs += 1
-                    if(Card()[0] == SecondCard()[0] and FindCount == 2):
+                    if(Card[0] == SecondCard[0] and FindCount == 2):
                         CheckCard.remove(SecondCard)
                         NumberOfPairs += 1
                     #if it has found a match but FindCount is at 0 it means it has found itself
-                    elif(Card()[0] == SecondCard()[0]):
+                    elif(Card[0] == SecondCard[0]):
                         FindCount += 1
                 #reset find count for thr next cycle
                 FindCount = 0
