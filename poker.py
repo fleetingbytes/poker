@@ -149,6 +149,16 @@ class Hands:
         CheckCard.append(Card6)
 
         #all the possible hands are created here and should not be ran individually insead run Check
+        
+        #find high card
+        def highcard (CheckCard):
+            highcard = 0
+            for Card in CheckCard:
+                if (int(Card()[0]) > highcard):
+                    highcard = int(Card()[0])
+            return highcard
+        
+        #find pair and 2 pair returns the value of the hand (pair = 1, 2 pair = 2
         def SimilarCards(CheckCard):
             NumberOfPairs = 0
             highcard = 0 
@@ -158,8 +168,6 @@ class Hands:
                     #if the first card == the second card and this we have found a pair increase the number of pairs and set the highcard
                     #we count how many times we find a pair because it will find itself so only on the 2nd find will it be an atchuall pair
                     if(Card()[0] == SecondCard()[0] and FindCount == 1):
-                        if (int(Card()[0]) > highcard):
-                            highcard = int(Card()[0])
                         CheckCard.remove(SecondCard)
                         NumberOfPairs += 1
                     #if it has found a match but FindCount is at 0 it means it has found itself
@@ -169,8 +177,9 @@ class Hands:
                 FindCount = 0
                 
             #set the hand value to the number of pairs as a 1 pair has a value of 1 and a 2 pair has a value of 2
-            return str(NumberOfPairs) +"," + str(highcard)
-                                           
+            return NumberOfPairs
+        
+        #TODO create the if tree that checks each function untill it finds the hand                                    
         return SimilarCards(CheckCard)
     
 class Player():
