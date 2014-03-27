@@ -152,7 +152,7 @@ class Hand():
     """All steps of a hand of poker will be run by this class"""
     def __init__(self):
         pass
-    def whoIsTheButton(listOfPlayers):
+    def whoIsTheButton(self,listOfPlayers):
         pass
     def playAHand(self):
         print("**** A NEW HAND STARTS ****")
@@ -203,13 +203,13 @@ deckOfCards = Deck()
 
 # create players
 Bob = Player("Bob", "all")
-Bob.giveCard(d.H8)
-Bob.giveCard(d.C8)
+Bob.giveCard(deckOfCards.H8)
+Bob.giveCard(deckOfCards.C8)
 Bob.pocketPair()
 Bob.suitedCards()
 Quinn = Player("Quinn", "all")
-Quinn.giveCard(d.HT)
-Quinn.giveCard(d.HJ)
+Quinn.giveCard(deckOfCards.HT)
+Quinn.giveCard(deckOfCards.HJ)
 Quinn.pocketPair()
 Quinn.suitedCards()
 
