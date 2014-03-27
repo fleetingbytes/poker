@@ -158,7 +158,7 @@ class Hands:
                     highcard = int(Card()[0])
             return highcard
         
-        #find pair and 2 pair returns the value of the hand (pair = 1, 2 pair = 2
+        #find pair and 2 pair returns the value of the hand (pair = 1, 2 pair = 2 3 of a kind = 3)
         def SimilarCards(CheckCard):
             NumberOfPairs = 0
             highcard = 0 
@@ -168,6 +168,9 @@ class Hands:
                     #if the first card == the second card and this we have found a pair increase the number of pairs and set the highcard
                     #we count how many times we find a pair because it will find itself so only on the 2nd find will it be an atchuall pair
                     if(Card()[0] == SecondCard()[0] and FindCount == 1):
+                        CheckCard.remove(SecondCard)
+                        NumberOfPairs += 1
+                    if(Card()[0] == SecondCard()[0] and FindCount == 2):
                         CheckCard.remove(SecondCard)
                         NumberOfPairs += 1
                     #if it has found a match but FindCount is at 0 it means it has found itself
@@ -284,6 +287,6 @@ game = Game(setOfPlayers, numberOfSeats, numberOfHands)
 # run the game
 game.playHands()
 
-handscheck = Hands.Check(deckOfCards.H8, deckOfCards.H8, deckOfCards.H9, deckOfCards.H9, deckOfCards.H2, deckOfCards.H3, deckOfCards.H4)
+handscheck = Hands.Check(deckOfCards.H8, deckOfCards.H8, deckOfCards.H8, deckOfCards.H9, deckOfCards.H9, deckOfCards.H3, deckOfCards.H4)
 
 print (handscheck)
