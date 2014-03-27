@@ -4,6 +4,7 @@
 from enum import Enum
 import random
 from lib import rndint # needed for true random shuffle of the deck of cards
+import brain as b
 
 # TODO:
 # seat the players at the table etc.
@@ -160,8 +161,6 @@ class Hand():
     """All steps of a hand of poker will be run by this class"""
     def __init__(self):
         pass
-    def whoIsTheButton(listOfPlayers):
-        pass
     def playAHand(self):
         print("**** A NEW HAND STARTS ****")
         print("* Shuffle the cards.")
@@ -217,15 +216,31 @@ class Table():
         for player in self.setOfPlayers:
             if player.wantsToJoinAGame:
                 listOfPlayersToJoinAGame.append(player)
+        print("**", len(listOfPlayersToJoinAGame), "players want to join a game")
         # since we want the players to be seated at the table randomly, we will shuffle this list
         random.shuffle(listOfPlayersToJoinAGame)
         for (player, seatNumber) in zip(listOfPlayersToJoinAGame, setOfEmptySeats):
             self.seats[seatNumber] = player
             # Once a player has joined a game, he no longer wants to join one.
             player.wantsToJoinAGame = False
-            print("*** Player", player.name, "sits at seat", seatNumber)
+            print("***", player.name, "sits at seat", seatNumber)
     def letPlayersGo(self):
-        pass
+        # Temporarily, the players decide randomly whether they want to leave the table or not.
+        for seatNumber, player in self.seats.items():
+            # We have to check whether a player is sitting at this seat
+            if player is not None:
+            # let the player decide whether he wants to leave the table
+                player.brain.wantToLeaveTheTable = player.brain.flipACoin()
+                if player.brain.wantToLeaveTheTable:
+                    self.seats[seatNumber] = None
+                    print("***", player.name, "has vacated seat", seatNumber)
+    def playerList(self):
+        """This returns the list of players currently sitting at the table and playing"""
+        listOfPlayersPlayingAtTheTable = list()
+        for seatNumber, player in self.seats.items():
+            if player is not None:
+                listOfPlayersPlayingAtTheTable.append(player)
+        return listOfPlayersPlayingAtTheTable
     def playGame(self):
         print("* A game is played.")
         for hand in range(self.game.numberOfHands):
@@ -234,12 +249,22 @@ class Table():
             self.invitePlayers()
             # create a hand
             hand = Hand()
-            # play the hand
-            print("** A hand is played.")
-            hand.playAHand()
-            # Temporarily, the players decide randomly whether they want to leave the table or not.
-            print("** Checking whether any players want to leave the game.")
-        print("* The game is over and the players leave the table.")
+            # Check whether there are enough players to play poker (at least 2)
+            if len(self.playerList()) > 1:
+                # play the hand
+                print("**", len(self.playerList()), "players play a hand.")
+                hand.playAHand()
+                print("** Checking whether any players want to leave the game.")
+                self.letPlayersGo()
+            # otherwise the last remaining player will leave the table.
+            elif len(self.playerList()) == 1:
+                # we will tell his brain that he wants to leave the table
+                self.playerList()[0].brain.wantToLeaveTheTable = True
+                print("** Last remaining player left the table.")
+                self.letPlayersGo()
+            if len(self.playerList()) == 0: 
+                break
+        print("* The game is over and all players have left the table.")
 
 ####################
 ## ACTUAL PROGRAM ##
@@ -257,10 +282,10 @@ setOfPlayers = set()
 # create players
 setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
 for name in setOfPlayerNames:
-    setOfPlayers.add(Player(name, "all"))
+    setOfPlayers.add(Player(name, b.allIn()))
 
 # define the number of hands to be played
-numberOfHands = 4
+numberOfHands = 20000
 
 # create game
 game = Game(numberOfHands)
