@@ -203,12 +203,11 @@ class Table():
         self.setOfPlayers = setOfPlayers
     def invitePlayers(self):
         """This function maps players who want to join a game to a free seat at the table."""
-        # later, we can have a complex players seating function here, for now, we'll just seat them in the order in which they are pulled out of the set
         # This wil check how many empty seats are there before a Hand is played. That many players may join the game for the next hand.
         setOfEmptySeats = set()
-        for key, value in self.seats.items():
-            if value is None:
-                setOfEmptySeats.add(key)
+        for seatNumber, player in self.seats.items():
+            if player is None:
+                setOfEmptySeats.add(seatNumber)
         # from the set of all players we make a list of players who want to join a game.
         listOfPlayersToJoinAGame = list()
         for player in self.setOfPlayers:
@@ -221,14 +220,14 @@ class Table():
             self.seats[seatNumber] = player
             # Once a player has joined a game, he no longer wants to join one.
             player.wantsToJoinAGame = False
-            print("***", player.name, "sits at seat", seatNumber)
+            print("***", player.name, "takes seat", seatNumber)
     def letPlayersGo(self):
-        # Temporarily, the players decide randomly whether they want to leave the table or not.
+        # Until players get more sophisticated brains, they decide randomly whether they want to leave the table or not.
         for seatNumber, player in self.seats.items():
             # We have to check whether a player is sitting at this seat
             if player is not None:
             # let the player decide whether he wants to leave the table
-                player.brain.wantToLeaveTheTable = player.brain.flipACoin()
+                player.brain.wantToLeaveTheTable = player.brain.tossACoin()
                 if player.brain.wantToLeaveTheTable:
                     self.seats[seatNumber] = None
                     print("***", player.name, "has vacated seat", seatNumber)
@@ -254,12 +253,13 @@ class Table():
                 hand.playAHand()
                 print("** Checking whether any players want to leave the game.")
                 self.letPlayersGo()
-            # otherwise the last remaining player will leave the table.
-            elif len(self.playerList()) == 1:
+            # otherwise the last remaining player will leave the table. (This mustn't be elif!)
+            if len(self.playerList()) == 1:
                 # we will tell his brain that he wants to leave the table
                 self.playerList()[0].brain.wantToLeaveTheTable = True
                 print("** Last remaining player left the table.")
                 self.letPlayersGo()
+            # otherwise the game is over (This mustn't be elif!)
             if len(self.playerList()) == 0: 
                 break
         print("* The game is over and all players have left the table.")
