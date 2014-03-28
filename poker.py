@@ -18,19 +18,19 @@ import brain as b
 # Card names:
 # A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2
 class CardValue(Enum):
-    ace = 13
-    king = 12
-    queen = 11
-    jack = 10
-    ten = 9
-    nine = 8
-    eight = 7
-    seven = 6
-    six = 5
-    five = 4
-    four = 3
-    trey = 2
-    deuce = 1
+    ace = 14
+    king = 13
+    queen = 12
+    jack = 11
+    ten = 10
+    nine = 9
+    eight = 8
+    seven = 7
+    six = 6
+    five = 5
+    four = 4
+    trey = 3
+    deuce = 2
 
 cardNames = dict(zip((CardValue.ace, CardValue.king, CardValue.queen, CardValue.jack, CardValue.ten, CardValue.nine, CardValue.eight, CardValue.seven, CardValue.six, CardValue.five, CardValue.four, CardValue.trey, CardValue.deuce), ("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2")))
 
