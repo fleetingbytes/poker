@@ -152,4 +152,10 @@ checkPlayersLeaveGame = Message(["Checking whether any players want to leave the
 lastPlayerHasLeft = Message(["Last remaining player (PLAYERNAME) has left the table."],
                             ["Last remaining player (PLAYERNAME) has left the table."], " ", everytime, everywhere)
 
+dealerGivesPlayerACard = Message(["Dealer gives PLAYERNAME", "CARD"], 
+                                 ["Dealer gives PLAYERNAME"], " ", onlyIfVerbose, everywhere)
+
+dealerTakesACardFromPlayer = Message(["Dealer takes", "CARD", "from PLAYERNAME"], 
+                                     ["Dealer takes"], " ", onlyIfVerbose, everywhere)
+
 messenger = Messenger()
