@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
 # How to debug this:
@@ -7,14 +7,14 @@
 # set path to Python34
 # run a new instance of cmd from the dir of poker.py
 # type "python <winpdb dir>rpdb2.py -pahoj -d poker.py" (password is "ahoj"
-# type "python y:\sven\python\winpdb\rpdb2.py -pahoj -d poker.py"
+# type 'python "y:\sven\My Dropbox\Dropbox\python\winpdb\rpdb2.py" -pahoj -d poker.py'
 # we need this waiting for keypress in order to attach the script to the winpdb debugger
 
-# import msvcrt
-# def wait():
-#     msvcrt.getch()
+#import msvcrt
+#def wait():
+#    msvcrt.getch()
 #
-# wait()
+#wait()
 
 import random
 import init
@@ -28,8 +28,8 @@ from optparse import OptionParser
 messenger = m.messenger
 
 # OptionParser will parse command line argumenty
-parser = OptionParser(usage="%prog", version="%prog 0.0.1", prog="Poker Pie")
-parser.add_option("-v", "--verbose",dest="verbose", action="store_true", help="Report internal stuff")
+parser = OptionParser(usage="%prog", version="%prog 0.0.2", prog="Poker Pie")
+parser.add_option("-v", "--verbose",dest="verbose", default=True, action="store_true", help="Report internal stuff")
 parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
 (options,args) = parser.parse_args()
 
@@ -196,18 +196,18 @@ class Hand():
         messenger.transmit(m.shufflingCardsPLACEHOLDER)
         messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
         messenger.transmit(m.placeBlindsPLACEHOLDER)
-        print("* Deal cards to the players.")
-        print("* Pre-flop bet, move money to the pot.")
-        print("* Burn one card and uncover the flop.")
-        print("* Flop bet, move money to the pot.")
-        print("* Burn one card and uncover the turn.")
-        print("* Turn bet, move money to the pot.")
-        print("* Burn one card and uncover the river.")
-        print("* River bet, move money to the pot.")
-        print("* Optional showdown.")
-        print("* Determine who is the winner.")
-        print("* Transfer the pot to the winner.")
-        print("* Collect the cards to the deck.")
+        messenger.transmit(m.dealCardsToPlayersPLACEHOLDER)
+        messenger.transmit(m.preFlopBetPLACEHOLDER)
+        messenger.transmit(m.uncoverFlopPLACEHOLDER)
+        messenger.transmit(m.flopBetPLACEHOLDER)
+        messenger.transmit(m.uncoverTurnPLACEHOLDER)
+        messenger.transmit(m.turnBetPLACEHOLDER)
+        messenger.transmit(m.uncoverRiverPLACEHOLDER)
+        messenger.transmit(m.riverBetPLACEHOLDER)
+        messenger.transmit(m.showdownPLACEHOLDER)
+        messenger.transmit(m.whoIsTheWinnerPLACEHOLDER)
+        messenger.transmit(m.transferPotToWinnerPLACEHOLDER)
+        messenger.transmit(m.collectCardsToDeckPLACEHOLDER)
 
 class Game():
     """Currently it incorporates the rules of Texas Hold'em. We can later have a Rules() class which's instance can be given to either Game() or Dealer() to tell them how the game should be run.
@@ -245,14 +245,21 @@ class Table():
         for player in self.setOfPlayers:
             if player.wantsToJoinAGame:
                 listOfPlayersToJoinAGame.append(player)
-        print("**", len(listOfPlayersToJoinAGame), "players want to join a game")
+        # update the message about how many players want to join a game
+        m.xPlayersWantToJoinAGame.whatToTransmit[0] = str(len(listOfPlayersToJoinAGame))
+        # transmit the message
+        messenger.transmit(m.xPlayersWantToJoinAGame, positionInWhatToTransmitWhichShouldBeRandomized=1)
         # since we want the players to be seated at the table randomly, we will shuffle this list
         random.shuffle(listOfPlayersToJoinAGame)
         for (player, seatNumber) in zip(listOfPlayersToJoinAGame, setOfEmptySeats):
             self.seats[seatNumber] = player
             # Once a player has joined a game, he no longer wants to join one.
             player.wantsToJoinAGame = False
-            print("***", player.name, "takes seat", seatNumber)
+            # update the message about player taking a seat
+            m.playerTakesSeatNumberX.updatePlayerName(player)
+            # update the seatnumber in the message
+            m.playerTakesSeatNumberX.whatToTransmit[1] = str(seatNumber)
+            messenger.transmit(m.playerTakesSeatNumberX)
     def letPlayersGo(self):
         # Until players get more sophisticated brains, they decide randomly whether they want to leave the table or not.
         for seatNumber, player in self.seats.items():
@@ -262,7 +269,11 @@ class Table():
                 player.brain.wantToLeaveTheTable = player.brain.tossACoin()
                 if player.brain.wantToLeaveTheTable:
                     self.seats[seatNumber] = None
-                    print("***", player.name, "has vacated seat", seatNumber)
+                    # update the message about player leaving the seat
+                    m.playerLeavesSeatNumberX.updatePlayerName(player)
+                    # update the seatnumber in the message
+                    m.playerLeavesSeatNumberX.whatToTransmit[1] = str(seatNumber)
+                    messenger.transmit(m.playerLeavesSeatNumberX)
     def playerList(self):
         """This returns the list of players currently sitting at the table and playing"""
         listOfPlayersPlayingAtTheTable = list()
@@ -271,30 +282,42 @@ class Table():
                 listOfPlayersPlayingAtTheTable.append(player)
         return listOfPlayersPlayingAtTheTable
     def playGame(self):
-        print("* A game is played.")
+        # update the game counter
+        init.counter["game"] = init.counter["game"] + 1
+        # update the game counter in the message
+        m.playingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
+        messenger.transmit(m.playingGameNumberX)
         for hand in range(self.game.numberOfHands):
+            messenger.transmit(m.checkPlayersJoinGame)
             # Check for empty seats at the table and seat the players.
-            print("** Checking whether any players want to join the game.")
             self.invitePlayers()
             # create a hand
             hand = Hand()
             # Check whether there are enough players to play poker (at least 2)
             if len(self.playerList()) > 1:
                 # play the hand
-                print("**", len(self.playerList()), "players play a hand.")
+                # update the message about how many players want to join a game
+                m.xPlayersPlayAHand.whatToTransmit[0] = str(len(self.playerList()))
+                # transmit the message
+                messenger.transmit(m.xPlayersPlayAHand, positionInWhatToTransmitWhichShouldBeRandomized=1)
                 hand.playAHand()
-                print("** Checking whether any players want to leave the game.")
+                messenger.transmit(m.checkPlayersLeaveGame)
                 self.letPlayersGo()
             # otherwise the last remaining player will leave the table. (This mustn't be elif!)
             if len(self.playerList()) == 1:
                 # we will tell his brain that he wants to leave the table
                 self.playerList()[0].brain.wantToLeaveTheTable = True
-                print("** Last remaining player left the table.")
+                # update the player's name in the message
+                m.lastPlayerHasLeft.updatePlayerName(self.playerList()[0])
+                # transmit the message that the player has left the table
+                messenger.transmit(m.lastPlayerHasLeft)
                 self.letPlayersGo()
             # otherwise the game is over (This mustn't be elif!)
             if len(self.playerList()) == 0: 
                 break
-        print("* The game is over and all players have left the table.")
+        # update the game counter in the message
+        m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
+        messenger.transmit(m.endingGameNumberX)
 
 ####################
 ## ACTUAL PROGRAM ##

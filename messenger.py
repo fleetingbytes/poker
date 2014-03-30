@@ -13,7 +13,7 @@
 import init, random, time
 
 class Message():
-    def __init__(self, whatToTransmit, listOfPossibleWordings, separatorOfMsgChunks, transmitOnlyIfVerboseWanted, whereToTransmitThisTo, playerName="DefaultName"):
+    def __init__(self, whatToTransmit, listOfPossibleWordings, separatorOfMsgChunks, transmitOnlyIfVerboseWanted, whereToTransmitThisTo, playerName="PLAYERNAME", positionInWhatToTransmitWhichShouldBeRandomized=0):
         # whatToTransmit is a list of message chunks, some of which will have placeholders or be picked from a list of possible wordings (see self.transmit())
         self.whatToTransmit = whatToTransmit
         self.listOfPossibleWordings = listOfPossibleWordings
@@ -27,7 +27,11 @@ class Message():
         # whereToTransmitThisTo is a set
         self.whereToTransmitThisTo = whereToTransmitThisTo
         self.playerName = playerName
-    def transmit(self, positionInWhatToTransmitWhichShouldBeRandomized=0):
+        self.positionInWhatToTransmitWhichShouldBeRandomized = positionInWhatToTransmitWhichShouldBeRandomized
+    def updatePlayerName(self, player):
+        """Needed to replace the PLAYERNAME placeholder with a player's name."""
+        self.playerName = player.name
+    def transmit(self, positionInWhatToTransmitWhichShouldBeRandomized):
         # whatToTransmit is a list of message chunks, some of which will have placeholders or be picked from a list of possible wordings (see self.transmit())
         # pick a random wording from the listOfPossibleWordings
         self.whatToTransmit[positionInWhatToTransmitWhichShouldBeRandomized] = random.choice(self.listOfPossibleWordings)
@@ -47,8 +51,8 @@ class Message():
 class Messenger():
     def __init__(self):
         pass
-    def transmit(self, message):
-        message.transmit()
+    def transmit(self, message, positionInWhatToTransmitWhichShouldBeRandomized=0):
+        message.transmit(positionInWhatToTransmitWhichShouldBeRandomized)
     def disableAllMessages():
         """This is a shortcut for disabling all messages. Instead of letting each message be typed to init.Nowhere() (/dev/null),
         we abort typing the message here at this very beginning by redefining the function self.transmit()"""
@@ -84,5 +88,68 @@ whoIsTheButtonPLACEHOLDER = Message(["Determining who is on the button."],
 
 placeBlindsPLACEHOLDER = Message(["Placing blinds."],
                                  ["Placing blinds."], " ", everytime, everywhere)
+
+dealCardsToPlayersPLACEHOLDER = Message(["Deal cards to the players."],
+                                        ["Deal cards to the players."], " ", everytime, everywhere)
+
+preFlopBetPLACEHOLDER = Message(["Pre-flop bet, move money to the pot."],
+                                ["Pre-flop bet, move money to the pot."], " ", everytime, everywhere)
+
+uncoverFlopPLACEHOLDER = Message(["Burn one card and uncover the flop."],
+                                 ["Burn one card and uncover the flop."], " ", everytime, everywhere)
+
+flopBetPLACEHOLDER = Message(["Flop bet, move money to the pot."],
+                             ["Flop bet, move money to the pot."], " ", everytime, everywhere)
+
+uncoverTurnPLACEHOLDER = Message(["Burn one card and uncover the turn."],
+                                 ["Burn one card and uncover the turn."], " ", everytime, everywhere)
+
+turnBetPLACEHOLDER = Message(["Turn bet, move money to the pot."],
+                             ["Turn bet, move money to the pot."], " ", everytime, everywhere)
+
+uncoverRiverPLACEHOLDER = Message(["Burn one card and uncover the river."],
+                                  ["Burn one card and uncover the river."], " ", everytime, everywhere)
+
+riverBetPLACEHOLDER = Message(["River bet, move money to the pot."],
+                              ["River bet, move money to the pot."], " ", everytime, everywhere)
+
+showdownPLACEHOLDER = Message(["Optional showdown."],
+                              ["Optional showdown."], " ", everytime, everywhere)
+
+whoIsTheWinnerPLACEHOLDER = Message(["Determine who is the winner."],
+                                    ["Determine who is the winner."], " ", everytime, everywhere)
+
+transferPotToWinnerPLACEHOLDER = Message(["Transfer the pot to the winner."],
+                                         ["Transfer the pot to the winner."], " ", everytime, everywhere)
+
+collectCardsToDeckPLACEHOLDER = Message(["Collect the cards to the deck."],
+                                        ["Collect the cards to the deck."], " ", everytime, everywhere)
+
+xPlayersWantToJoinAGame = Message(["NUMBER", "players want to join a game."],
+                                  ["players want to join a game."], " ", everytime, everywhere)
+
+playerTakesSeatNumberX = Message(["PLAYERNAME takes seat number ", "SEATNUMBER", "."],
+                                 ["PLAYERNAME takes seat number "], "", everytime, everywhere)
+
+playerLeavesSeatNumberX = Message(["PLAYERNAME has vacated seat number ", "SEATNUMBER", "."],
+                                  ["PLAYERNAME has vacated seat number "], "", everytime, everywhere)
+
+playingGameNumberX = Message(["Playing game number ", "GAMENUMBER", "."],
+                             ["Playing game number "], "", everytime, everywhere)
+
+endingGameNumberX = Message(["Game number ", "GAMENUMBER", " is over and all players have left the table."],
+                            ["Game number "], "", everytime, everywhere)
+
+checkPlayersJoinGame = Message(["Checking whether any players want to join the game."], 
+                               ["Checking whether any players want to join the game."], " ", everytime, everywhere)
+
+xPlayersPlayAHand = Message(["NUMBER", "players play a hand."],
+                            ["players play a hand."], " ", everytime, everywhere)
+
+checkPlayersLeaveGame = Message(["Checking whether any players want to leave the game."], 
+                                ["Checking whether any players want to leave the game."], " ", everytime, everywhere)
+
+lastPlayerHasLeft = Message(["Last remaining player (PLAYERNAME) has left the table."],
+                            ["Last remaining player (PLAYERNAME) has left the table."], " ", everytime, everywhere)
 
 messenger = Messenger()

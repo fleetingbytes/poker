@@ -22,7 +22,10 @@ msgTarget = {"screen":sys.stdout, "logfile":nowhere}
 log = None
 
 # dictionary of various counters (later to be replaced by some objects for long-term statistics)
-counter = dict(zip(["hand"], [0]))
+counter = dict(zip(["hand", "game"], [0, 0]))
+
+# In messages, the default chunk of text which is randomized in the list whatToTransmit on position 0
+defaultRandomizationPoition = 0
 
 if __name__ == "__main__":
     pass
