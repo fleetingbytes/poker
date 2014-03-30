@@ -218,8 +218,6 @@ class Dealer():
         # and transmit a message saying which player took which seat
         for (player, seatNumber) in zip(listOfPlayersToJoinAGame, self.table.setOfEmptySeats()):
             self.table.seats[seatNumber] = player
-            # Once a player has joined a game, he no longer wants to join one.
-            player.wantsToJoinAGame = False
             # update the message about player taking a seat
             m.playerTakesSeatNumberX.updatePlayerName(player)
             # update the seatnumber in the message
