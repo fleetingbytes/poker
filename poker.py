@@ -1,19 +1,47 @@
 ﻿#!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
-from enum import Enum
+# How to debug this:
+# set path to Python27
+# run cmd in winpdb dir, then start winpdb by "python winpdb.py"
+# set path to Python34
+# run a new instance of cmd from the dir of poker.py
+# type "python <winpdb dir>rpdb2.py -pahoj -d poker.py" (password is "ahoj"
+# type "python y:\sven\python\winpdb\rpdb2.py -pahoj -d poker.py"
+# we need this waiting for keypress in order to attach the script to the winpdb debugger
+
+# import msvcrt
+# def wait():
+#     msvcrt.getch()
+#
+# wait()
+
 import random
+import init
+import brain
+import messenger as m
+from enum import Enum
 from lib import rndint # needed for true random shuffle of the deck of cards
-import brain as b
+from optparse import OptionParser
 
-# TODO:
-# Nagi's avatar on github
+# Shortcuts and aliases:
+messenger = m.messenger
 
-# Requirements
-# Comparison table for pocket cards strength. (for 2-9 players)
-# Query: e.g. got 3 cards of one color after flop. What's the probability of a flush., Got three of a kind, how probably can someone has a full house.
-# Play of 2-9 players. Each player will get a "brain" (poker strategy algorithm).
-# Be able to randomly generate players
+# OptionParser will parse command line argumenty
+parser = OptionParser(usage="%prog", version="%prog 0.0.1", prog="Poker Pie")
+parser.add_option("-v", "--verbose",dest="verbose", action="store_true", help="Report internal stuff")
+parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
+(options,args) = parser.parse_args()
+
+init.verbose = options.verbose
+init.log = options.log
+
+# If logging is enabled, create the necessary files:
+if init.log:
+    # general log file
+    logfile = open("log.txt", mode="a", encoding="UTF_8")
+    # include this logfile in the set of targets for messages
+    init.msgTarget["logfile"] = logfile
 
 # Card names:
 # A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2
@@ -160,10 +188,14 @@ class Hand():
     def __init__(self):
         pass
     def playAHand(self):
-        print("**** A NEW HAND STARTS ****")
-        print("* Shuffle the cards.")
-        print("* Determine who is the button.")
-        print("* Place blinds.")
+        # increment the hand counter
+        init.counter["hand"] = init.counter["hand"] + 1
+        # before we type out the number of hand which is being played we update the message:
+        m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
+        messenger.transmit(m.aNewHandStarts)
+        messenger.transmit(m.shufflingCardsPLACEHOLDER)
+        messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
+        messenger.transmit(m.placeBlindsPLACEHOLDER)
         print("* Deal cards to the players.")
         print("* Pre-flop bet, move money to the pot.")
         print("* Burn one card and uncover the flop.")
@@ -280,7 +312,7 @@ setOfPlayers = set()
 # create players
 setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
 for name in setOfPlayerNames:
-    setOfPlayers.add(Player(name, b.allIn()))
+    setOfPlayers.add(Player(name, brain.allIn()))
 
 # define the number of hands to be played
 numberOfHands = 20000
@@ -295,5 +327,5 @@ numberOfSeats = 9
 table = Table(numberOfSeats, dealer, game, setOfPlayers)
 
 # run the game
+messenger.transmit(m.aNewRunStarts)
 table.playGame()
-
