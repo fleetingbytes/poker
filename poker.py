@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from enum import Enum
 import random
 from shuffle import RealRandom
@@ -7,29 +8,66 @@ import brain as b
 
 # TODO:
 # Nagi's avatar on github
+=======
+﻿#!/usr/bin/python
+# -*- coding: UTF_8 -*-
 
-# Requirements
-# Comparison table for pocket cards strength. (for 2-9 players)
-# Query: e.g. got 3 cards of one color after flop. What's the probability of a flush., Got three of a kind, how probably can someone has a full house.
-# Play of 2-9 players. Each player will get a "brain" (poker strategy algorithm).
-# Be able to randomly generate players
+# How to debug this:
+# set path to Python27
+# run cmd in winpdb dir, then start winpdb by "python winpdb.py"
+# set path to Python34
+# run a new instance of cmd from the dir of poker.py
+# type "python <winpdb dir>rpdb2.py -pahoj -d poker.py" (password is "ahoj"
+# type 'python "y:\sven\My Dropbox\Dropbox\python\winpdb\rpdb2.py" -pahoj -d poker.py'
+# we need the following keypress routine in order to attach the script to the winpdb debugger (workaround for a bug in rpdb2.py)
+
+import msvcrt
+#msvcrt.getch()
+
+import random
+import init
+import brain
+import messenger as m
+from enum import Enum
+from lib import rndint # needed for true random shuffle of the deck of cards
+from optparse import OptionParser
+
+# Shortcuts and aliases:
+messenger = m.messenger
+
+# OptionParser will parse command line argumenty
+parser = OptionParser(usage="%prog", version="%prog 0.0.2", prog="Poker Pie")
+parser.add_option("-v", "--verbose",dest="verbose", default=True, action="store_true", help="Report internal stuff")
+parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
+(options,args) = parser.parse_args()
+
+init.verbose = options.verbose
+init.log = options.log
+>>>>>>> upstream/master
+
+# If logging is enabled, create the necessary files:
+if init.log:
+    # general log file
+    logfile = open("log.txt", mode="a", encoding="UTF_8")
+    # include this logfile in the set of targets for messages
+    init.msgTarget["logfile"] = logfile
 
 # Card names:
 # A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2
 class CardValue(Enum):
-    ace = 13
-    king = 12
-    queen = 11
-    jack = 10
-    ten = 9
-    nine = 8
-    eight = 7
-    seven = 6
-    six = 5
-    five = 4
-    four = 3
-    trey = 2
-    deuce = 1
+    ace = 14
+    king = 13
+    queen = 12
+    jack = 11
+    ten = 10
+    nine = 9
+    eight = 8
+    seven = 7
+    six = 6
+    five = 5
+    four = 4
+    trey = 3
+    deuce = 2
 
 cardNames = dict(zip((CardValue.ace, CardValue.king, CardValue.queen, CardValue.jack, CardValue.ten, CardValue.nine, CardValue.eight, CardValue.seven, CardValue.six, CardValue.five, CardValue.four, CardValue.trey, CardValue.deuce), ("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2")))
 
@@ -119,19 +157,53 @@ class Deck:
         for card in self.cards:
             listOfCards.append(card(parameter))
         return listOfCards
+<<<<<<< HEAD
     def __str__(self):
         str = "Cards in deck: "
         for card in self.cards:
             str += card()+", "
         return str
+=======
+    def cut(self):
+        """Take 1/3 or 2/3 of a deck, place it aside, put the remaining cards on top of it."""
+        #Sample (1/3): 18, 24, 21, 20, 21, 20, 19, 17, 18, 21, 18, 18, 18, 21, 17 (mean: 19.4) 17-24 µ=19.5, σ=2.2
+        #Sample (2/3): 15, 11, 17, 18, 17, 19, 16, 16, 19, 13, 15, 17, 15, 21, 17 (mean: 16,4) 14-21 µ=16.5, σ=2.2
+        # We will use Gaussian distribution, with µ=19.4, s=2.2 for upper third, and µ=16.4, s=2.2 for lower third.
+        # artificial boundaries will be set by ±4
+        # decide whether to take the upper of lower half
+        # if upper half, then µ is 19.5
+        if bool(random.getrandbits(1)):
+            µ = 19.5
+            Δ = 0
+        else:
+            µ = 35.5 # [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+            Δ = 16
+        σ = 2.2
+        cardsTaken = 0
+        while (cardsTaken < (15 + Δ)) or (cardsTaken > (24 + Δ)):
+            cardsTaken = random.gauss(µ, σ)
+        cardsTaken = int(round(cardsTaken, 0))
+        self.cards = self.cards[cardsTaken:] + self.cards[:cardsTaken]
+>>>>>>> upstream/master
     def shuffl(self, method):
         pass
     def shuffle(self, shufflingSequence):
         # shufflingSequence is a list of shuffling methods, e.g. [wash, riffle, riffle, box, riffle, cut]
         for method in shufflingSequence:
             self.shuffl(self.cards)
+<<<<<<< HEAD
     def deal(self, player):
         player.giveCard(self.cards.pop())
+=======
+    def randomOrgShuffle(self):
+        # Seed Random Generator with true Random Value ans shuffle list
+        # random.seed(rndint.get(0, len(self.cards), 1).pop())
+        # random.shuffle(self.cards)
+        # rndint.get function reference: https://code.google.com/p/pyrndorg/source/browse/trunk/rndint.py?r=2
+        pass
+    def pop(self):
+        return self.cards.pop()
+>>>>>>> upstream/master
 
 class Player():
     def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
@@ -140,7 +212,7 @@ class Player():
         self.cards = set()
         self.wantsToJoinAGame = wantsToJoinAGame
         self.wantsToLeaveAGame = wantsToLeaveAGame
-    def giveCard(self, card):
+    def receiveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
         # this will print the player's cards ordered
@@ -158,25 +230,8 @@ class Player():
 
 class Hand():
     """All steps of a hand of poker will be run by this class"""
-    def __init__(self):
-        pass
-    def playAHand(self):
-        print("**** A NEW HAND STARTS ****")
-        print("* Shuffle the cards.")
-        print("* Determine who is the button.")
-        print("* Place blinds.")
-        print("* Deal cards to the players.")
-        print("* Pre-flop bet, move money to the pot.")
-        print("* Burn one card and uncover the flop.")
-        print("* Flop bet, move money to the pot.")
-        print("* Burn one card and uncover the turn.")
-        print("* Turn bet, move money to the pot.")
-        print("* Burn one card and uncover the river.")
-        print("* River bet, move money to the pot.")
-        print("* Optional showdown.")
-        print("* Determine who is the winner.")
-        print("* Transfer the pot to the winner.")
-        print("* Collect the cards to the deck.")
+    pass
+        
 
 class Game():
     """Currently it incorporates the rules of Texas Hold'em. We can later have a Rules() class which's instance can be given to either Game() or Dealer() to tell them how the game should be run.
@@ -189,86 +244,177 @@ class Game():
 
 class Dealer():
     """dealer who runs the game of poker (tells whose turn is it), deals the cards to players and manages the pot at a table."""
-    def __init__(self, deck):
+    def __init__(self, deck, game, table, setOfPlayers):
         self.deck = deck
-
-class Table():
-    """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
-    It also inherently has a dealer who deals the cards to players and manages the pot."""
-    def __init__(self, numberOfSeats, dealer, game, setOfPlayers):
-        self.numberOfSeats = numberOfSeats
-        self.dealer = dealer
         self.game = game
-        # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
-        self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
+        self.table = table
         self.setOfPlayers = setOfPlayers
     def invitePlayers(self):
         """This function maps players who want to join a game to a free seat at the table."""
-        # later, we can have a complex players seating function here, for now, we'll just seat them in the order in which they are pulled out of the set
-        # This wil check how many empty seats are there before a Hand is played. That many players may join the game for the next hand.
-        setOfEmptySeats = set()
-        for key, value in self.seats.items():
-            if value is None:
-                setOfEmptySeats.add(key)
         # from the set of all players we make a list of players who want to join a game.
         listOfPlayersToJoinAGame = list()
         for player in self.setOfPlayers:
             if player.wantsToJoinAGame:
                 listOfPlayersToJoinAGame.append(player)
-        print("**", len(listOfPlayersToJoinAGame), "players want to join a game")
+        # update the message about how many players want to join a game
+        m.xPlayersWantToJoinAGame.whatToTransmit[0] = str(len(listOfPlayersToJoinAGame))
+        # transmit the message
+        messenger.transmit(m.xPlayersWantToJoinAGame, positionInWhatToTransmitWhichShouldBeRandomized=1)
         # since we want the players to be seated at the table randomly, we will shuffle this list
         random.shuffle(listOfPlayersToJoinAGame)
-        for (player, seatNumber) in zip(listOfPlayersToJoinAGame, setOfEmptySeats):
-            self.seats[seatNumber] = player
-            # Once a player has joined a game, he no longer wants to join one.
-            player.wantsToJoinAGame = False
-            print("***", player.name, "sits at seat", seatNumber)
+        # for each player taking a seat at the table we will put him into the table's seats dictionary
+        # and transmit a message saying which player took which seat
+        for (player, seatNumber) in zip(listOfPlayersToJoinAGame, self.table.setOfEmptySeats()):
+            self.table.seats[seatNumber] = player
+            # update the message about player taking a seat
+            m.playerTakesSeatNumberX.updatePlayerName(player)
+            # update the seatnumber in the message
+            m.playerTakesSeatNumberX.whatToTransmit[1] = str(seatNumber)
+            messenger.transmit(m.playerTakesSeatNumberX)
     def letPlayersGo(self):
-        # Temporarily, the players decide randomly whether they want to leave the table or not.
-        for seatNumber, player in self.seats.items():
+        # Until players get more sophisticated brains, they decide randomly whether they want to leave the table or not.
+        for seatNumber, player in self.table.seats.items():
             # We have to check whether a player is sitting at this seat
             if player is not None:
             # let the player decide whether he wants to leave the table
-                player.brain.wantToLeaveTheTable = player.brain.flipACoin()
+                player.brain.wantToLeaveTheTable = player.brain.tossACoin()
                 if player.brain.wantToLeaveTheTable:
-                    self.seats[seatNumber] = None
-                    print("***", player.name, "has vacated seat", seatNumber)
-    def playerList(self):
+                    self.table.seats[seatNumber] = None
+                    # update the message about player leaving the seat
+                    m.playerLeavesSeatNumberX.updatePlayerName(player)
+                    # update the seatnumber in the message
+                    m.playerLeavesSeatNumberX.whatToTransmit[1] = str(seatNumber)
+                    messenger.transmit(m.playerLeavesSeatNumberX)
+    def dealCard(self, player):
+        # later we should only use player.receiveCard(self.deck.pop())
+        # update the message about the dealer giving this player this card.
+        m.dealerGivesPlayerACard.whatToTransmit[1] = self.deck.cards[-1]()
+        # take the first card from the deck and give it to the player
+        player.receiveCard(self.deck.pop())
+        # update the player's name in the message
+        m.dealerGivesPlayerACard.updatePlayerName(player)
+        # transmit the message
+        messenger.transmit(m.dealerGivesPlayerACard)
+    def dealCardsToAllPlayers(self):
+        # Dealer deals in two rounds, each round he gives one card to each players.
+        for counter in range(2):
+            for player in self.table.listOfPlayersAtTheTable():
+                self.dealCard(player)
+    def collectAllCards(self):
+        # After each hand the dealer collects all cards from the players.
+        for player in self.table.listOfPlayersAtTheTable():
+            while player.cards:
+                # later we should only use self.deck.cards.append(player.cards.pop())
+                self.deck.cards.append(player.cards.pop())
+                # update the player name in the message
+                m.dealerTakesACardFromPlayer.updatePlayerName(player)
+                # update the message about this card being collected.
+                m.dealerTakesACardFromPlayer.whatToTransmit[1] = self.deck.cards[-1]()
+                # transmit the message
+                messenger.transmit(m.dealerTakesACardFromPlayer)
+        # dealer will later also collect the community cards laid out on the table (a.k.a. 'the board')
+        # dealer will later also collect the cards which have been 'burned' before flop, turn, and river.
+    def playAHand(self):
+        # increment the hand counter
+        init.counter["hand"] = init.counter["hand"] + 1
+        # before we type out the number of hand which is being played we update the message:
+        m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
+        messenger.transmit(m.aNewHandStarts)
+        messenger.transmit(m.shufflingCardsPLACEHOLDER)
+        self.deck.cut()
+        messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
+        messenger.transmit(m.placeBlindsPLACEHOLDER)
+        # Dealer deals to the players
+        messenger.transmit(m.dealCardsToPlayersPLACEHOLDER)
+        self.dealCardsToAllPlayers()
+        messenger.transmit(m.preFlopBetPLACEHOLDER)
+        messenger.transmit(m.uncoverFlopPLACEHOLDER)
+        messenger.transmit(m.flopBetPLACEHOLDER)
+        messenger.transmit(m.uncoverTurnPLACEHOLDER)
+        messenger.transmit(m.turnBetPLACEHOLDER)
+        messenger.transmit(m.uncoverRiverPLACEHOLDER)
+        messenger.transmit(m.riverBetPLACEHOLDER)
+        messenger.transmit(m.showdownPLACEHOLDER)
+        messenger.transmit(m.whoIsTheWinnerPLACEHOLDER)
+        messenger.transmit(m.transferPotToWinnerPLACEHOLDER)
+        # dealer collects cards from the players and the table.
+        self.collectAllCards()
+        messenger.transmit(m.collectCardsToDeckPLACEHOLDER)
+    def playGame(self):
+        # update the game counter
+        init.counter["game"] = init.counter["game"] + 1
+        # update the game counter in the message
+        m.playingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
+        # transmit the message that a game is played.
+        messenger.transmit(m.playingGameNumberX)
+        for hand in range(self.game.numberOfHands):
+            # Verbose typeout "Checking whether any players want to join the game."
+            messenger.transmit(m.checkPlayersJoinGame)
+            # Check for empty seats at the table and seat the players.
+            self.invitePlayers()
+            # Check whether there are enough players to play poker (at least 2)
+            if len(self.table.listOfPlayersAtTheTable()) > 1:
+                # play the hand
+                # update the message about how many players want to join a game
+                m.xPlayersPlayAHand.whatToTransmit[0] = str(len(self.table.listOfPlayersAtTheTable()))
+                # transmit the message
+                messenger.transmit(m.xPlayersPlayAHand, positionInWhatToTransmitWhichShouldBeRandomized=1)
+                self.playAHand()
+                messenger.transmit(m.checkPlayersLeaveGame)
+                self.letPlayersGo()
+            # otherwise the last remaining player will leave the table. (This mustn't be elif!)
+            if len(self.table.listOfPlayersAtTheTable()) == 1:
+                # we will tell his brain that he wants to leave the table
+                self.table.listOfPlayersAtTheTable()[0].brain.wantToLeaveTheTable = True
+                # update the player's name in the message
+                m.lastPlayerHasLeft.updatePlayerName(self.table.listOfPlayersAtTheTable()[0])
+                # transmit the message that the player has left the table
+                messenger.transmit(m.lastPlayerHasLeft)
+                self.letPlayersGo()
+            # otherwise the game is over (This mustn't be elif!)
+            if len(self.table.listOfPlayersAtTheTable()) == 0: 
+                break
+        # update the game counter in the message
+        m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
+        messenger.transmit(m.endingGameNumberX)
+
+class Table():
+    """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
+    It also inherently has a dealer who deals the cards to players and manages the pot."""
+    def __init__(self, numberOfSeats):
+        self.numberOfSeats = numberOfSeats
+        # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
+        self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
+    def setOfEmptySeats(self):
+        """This will check how many empty seats are there.
+        It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
+        (used when inviting players to the table, etc.)"""
+        emptySeats = set()
+        for seatNumber, player in self.seats.items():
+            if player is None:
+                emptySeats.add(seatNumber)
+        return emptySeats # as a list of seat numbers, e.g. [2, 3, 5, 8, 9]
+    def listOfPlayersAtTheTable(self):
         """This returns the list of players currently sitting at the table and playing"""
         listOfPlayersPlayingAtTheTable = list()
         for seatNumber, player in self.seats.items():
             if player is not None:
                 listOfPlayersPlayingAtTheTable.append(player)
         return listOfPlayersPlayingAtTheTable
-    def playGame(self):
-        print("* A game is played.")
-        for hand in range(self.game.numberOfHands):
-            # Check for empty seats at the table and seat the players.
-            print("** Checking whether any players want to join the game.")
-            self.invitePlayers()
-            # create a hand
-            hand = Hand()
-            # Check whether there are enough players to play poker (at least 2)
-            if len(self.playerList()) > 1:
-                # play the hand
-                print("**", len(self.playerList()), "players play a hand.")
-                hand.playAHand()
-                print("** Checking whether any players want to leave the game.")
-                self.letPlayersGo()
-            # otherwise the last remaining player will leave the table.
-            elif len(self.playerList()) == 1:
-                # we will tell his brain that he wants to leave the table
-                self.playerList()[0].brain.wantToLeaveTheTable = True
-                print("** Last remaining player left the table.")
-                self.letPlayersGo()
-            if len(self.playerList()) == 0: 
-                break
-        print("* The game is over and all players have left the table.")
+    def sortedListOfPlayers(self):
+        # create a list of players sorted according to the seat number they have taken
+        # search for a seat which is not empty, add the player sitting there to the list
+        sortedListOfPlayers = list()
+        for i in range(self.seats.values()):
+            if self.seats[i] is not None:
+                sortedListOfPlayers.append(seats[i])
+        return sortedListOfPlayers
 
 ####################
 ## ACTUAL PROGRAM ##
 ####################
 
+<<<<<<< HEAD
 # create a deck of cards
 deckOfCards = Deck()
 
@@ -395,3 +541,36 @@ print(len(RealRandom.buffer))
 
 # run the game
 #table.playGame()
+=======
+if __name__ == "__main__":
+    # create a deck of cards
+    deckOfCards = Deck()
+    
+    # create a set of players interested in a game of poker at a particular table
+    setOfPlayers = set()
+    
+    # create players
+    setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+    for name in setOfPlayerNames:
+        setOfPlayers.add(Player(name, brain.allIn()))
+    
+    # define the number of hands to be played
+    numberOfHands = 20000
+    
+    # create game
+    game = Game(numberOfHands)
+    
+    # define the number of seats at the poker table
+    numberOfSeats = 9
+    
+    # create a table
+    table = Table(numberOfSeats)
+    
+    # create a dealer and give him the deck of cards.
+    dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+    
+    # run the game
+    messenger.transmit(m.aNewRunStarts)
+    dealer.playGame()
+    
+>>>>>>> upstream/master
