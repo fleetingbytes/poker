@@ -1,15 +1,4 @@
-<<<<<<< HEAD
-from enum import Enum
-import random
-from shuffle import RealRandom
-import brain as b
-
-
-
-# TODO:
-# Nagi's avatar on github
-=======
-﻿#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
 # How to debug this:
@@ -43,7 +32,6 @@ parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false
 
 init.verbose = options.verbose
 init.log = options.log
->>>>>>> upstream/master
 
 # If logging is enabled, create the necessary files:
 if init.log:
@@ -93,8 +81,6 @@ class Card():
             return cardNames[self.value] + cardColors[self.color]
         if parameter == "text":
             return self.value.name + " of " + self.color.name
-    def __str__(self):
-        return self("text")
 
 class Deck:
     def __init__(self):
@@ -151,19 +137,11 @@ class Deck:
         self.C3 = Card(CardValue.trey, CardColor.clubs)
         self.C2 = Card(CardValue.deuce, CardColor.clubs)
         self.cards = list((self.SA, self.SK, self.SQ, self.SJ, self.ST, self.S9, self.S8, self.S7, self.S6, self.S5, self.S4, self.S3, self.S2, self.HA, self.HK, self.HQ, self.HJ, self.HT, self.H9, self.H8, self.H7, self.H6, self.H5, self.H4, self.H3, self.H2, self.DA, self.DK, self.DQ, self.DJ, self.DT, self.D9, self.D8, self.D7, self.D6, self.D5, self.D4, self.D3, self.D2, self.CA, self.CK, self.CQ, self.CJ, self.CT, self.C9, self.C8, self.C7, self.C6, self.C5, self.C4, self.C3, self.C2))
-        self.cards = RealRandom.shuffle(self.cards)
     def __call__(self, parameter="short"):
         listOfCards = list()
         for card in self.cards:
             listOfCards.append(card(parameter))
         return listOfCards
-<<<<<<< HEAD
-    def __str__(self):
-        str = "Cards in deck: "
-        for card in self.cards:
-            str += card()+", "
-        return str
-=======
     def cut(self):
         """Take 1/3 or 2/3 of a deck, place it aside, put the remaining cards on top of it."""
         #Sample (1/3): 18, 24, 21, 20, 21, 20, 19, 17, 18, 21, 18, 18, 18, 21, 17 (mean: 19.4) 17-24 µ=19.5, σ=2.2
@@ -184,17 +162,12 @@ class Deck:
             cardsTaken = random.gauss(µ, σ)
         cardsTaken = int(round(cardsTaken, 0))
         self.cards = self.cards[cardsTaken:] + self.cards[:cardsTaken]
->>>>>>> upstream/master
     def shuffl(self, method):
         pass
     def shuffle(self, shufflingSequence):
         # shufflingSequence is a list of shuffling methods, e.g. [wash, riffle, riffle, box, riffle, cut]
         for method in shufflingSequence:
             self.shuffl(self.cards)
-<<<<<<< HEAD
-    def deal(self, player):
-        player.giveCard(self.cards.pop())
-=======
     def randomOrgShuffle(self):
         # Seed Random Generator with true Random Value ans shuffle list
         # random.seed(rndint.get(0, len(self.cards), 1).pop())
@@ -203,7 +176,6 @@ class Deck:
         pass
     def pop(self):
         return self.cards.pop()
->>>>>>> upstream/master
 
 class Player():
     def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
@@ -235,8 +207,8 @@ class Hand():
 
 class Game():
     """Currently it incorporates the rules of Texas Hold'em. We can later have a Rules() class which's instance can be given to either Game() or Dealer() to tell them how the game should be run.
-    The game will also have an endGameCondition (as an instance of Condition()) to tell when this game ends.
-    Right now this is simplified to a given numberOfHands which are played and then the game is over."""
+The game will also have an endGameCondition (as an instance of Condition()) to tell when this game ends.
+Right now this is simplified to a given numberOfHands which are played and then the game is over."""
     def __init__(self, numberOfHands):
         # number of hands is a preliminary construct, until we have implemented the custom endGameConditions properly.
         # until then, the game ends when a certain number of hands have been played.
@@ -372,7 +344,7 @@ class Dealer():
                 messenger.transmit(m.lastPlayerHasLeft)
                 self.letPlayersGo()
             # otherwise the game is over (This mustn't be elif!)
-            if len(self.table.listOfPlayersAtTheTable()) == 0: 
+            if len(self.table.listOfPlayersAtTheTable()) == 0:
                 break
         # update the game counter in the message
         m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
@@ -380,15 +352,15 @@ class Dealer():
 
 class Table():
     """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
-    It also inherently has a dealer who deals the cards to players and manages the pot."""
+It also inherently has a dealer who deals the cards to players and manages the pot."""
     def __init__(self, numberOfSeats):
         self.numberOfSeats = numberOfSeats
         # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
         self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
     def setOfEmptySeats(self):
         """This will check how many empty seats are there.
-        It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
-        (used when inviting players to the table, etc.)"""
+It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
+(used when inviting players to the table, etc.)"""
         emptySeats = set()
         for seatNumber, player in self.seats.items():
             if player is None:
@@ -414,134 +386,6 @@ class Table():
 ## ACTUAL PROGRAM ##
 ####################
 
-<<<<<<< HEAD
-# create a deck of cards
-deckOfCards = Deck()
-
-print(deckOfCards)
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-RealRandom.shuffle(deckOfCards.cards)
-print(deckOfCards)
-print(len(RealRandom.buffer))
-
-# create a dealer and give him the deck of cards.
-#dealer = Dealer(deckOfCards)
-
-# create a set of players interested in a game of poker at a particular table
-#setOfPlayers = set()
-
-# create players
-#setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
-#for name in setOfPlayerNames:
-#    setOfPlayers.add(Player(name, b.allIn()))
-
-# define the number of hands to be played
-#numberOfHands = 20000
-
-# create game
-#game = Game(numberOfHands)
-
-# define the number of seats at the poker table
-#numberOfSeats = 9
-
-# create a table
-#table = Table(numberOfSeats, dealer, game, setOfPlayers)
-
-# run the game
-#table.playGame()
-=======
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
@@ -572,5 +416,3 @@ if __name__ == "__main__":
     # run the game
     messenger.transmit(m.aNewRunStarts)
     dealer.playGame()
-    
->>>>>>> upstream/master
