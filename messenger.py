@@ -159,3 +159,6 @@ dealerTakesACardFromPlayer = Message(["Dealer takes", "CARD", "from PLAYERNAME"]
                                      ["Dealer takes"], " ", onlyIfVerbose, everywhere)
 
 messenger = Messenger()
+
+if __name__ == "__main__":
+    pass

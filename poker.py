@@ -1,4 +1,4 @@
-#!/usr/bin/python
+﻿#!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
 # How to debug this:
@@ -142,6 +142,26 @@ class Deck:
         for card in self.cards:
             listOfCards.append(card(parameter))
         return listOfCards
+    def cut(self):
+        """Take 1/3 or 2/3 of a deck, place it aside, put the remaining cards on top of it."""
+        #Sample (1/3): 18, 24, 21, 20, 21, 20, 19, 17, 18, 21, 18, 18, 18, 21, 17 (mean: 19.4) 17-24 µ=19.5, σ=2.2
+        #Sample (2/3): 15, 11, 17, 18, 17, 19, 16, 16, 19, 13, 15, 17, 15, 21, 17 (mean: 16,4) 14-21 µ=16.5, σ=2.2
+        # We will use Gaussian distribution, with µ=19.4, s=2.2 for upper third, and µ=16.4, s=2.2 for lower third.
+        # artificial boundaries will be set by ±4
+        # decide whether to take the upper of lower half
+        # if upper half, then µ is 19.5
+        if bool(random.getrandbits(1)):
+            µ = 19.5
+            Δ = 0
+        else:
+            µ = 35.5 # [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+            Δ = 16
+        σ = 2.2
+        cardsTaken = 0
+        while (cardsTaken < (15 + Δ)) or (cardsTaken > (24 + Δ)):
+            cardsTaken = random.gauss(µ, σ)
+        cardsTaken = int(round(cardsTaken, 0))
+        self.cards = self.cards[cardsTaken:] + self.cards[:cardsTaken]
     def shuffl(self, method):
         pass
     def shuffle(self, shufflingSequence):
@@ -239,13 +259,12 @@ class Dealer():
                     messenger.transmit(m.playerLeavesSeatNumberX)
     def dealCard(self, player):
         # later we should only use player.receiveCard(self.deck.pop())
+        # update the message about the dealer giving this player this card.
+        m.dealerGivesPlayerACard.whatToTransmit[1] = self.deck.cards[-1]()
         # take the first card from the deck and give it to the player
-        cardBeingDealt = self.deck.pop()
+        player.receiveCard(self.deck.pop())
         # update the player's name in the message
         m.dealerGivesPlayerACard.updatePlayerName(player)
-        # update the message about the dealer giving this player this card.
-        m.dealerGivesPlayerACard.whatToTransmit[1] = cardBeingDealt()
-        player.receiveCard(cardBeingDealt)
         # transmit the message
         messenger.transmit(m.dealerGivesPlayerACard)
     def dealCardsToAllPlayers(self):
@@ -258,12 +277,11 @@ class Dealer():
         for player in self.table.listOfPlayersAtTheTable():
             while player.cards:
                 # later we should only use self.deck.cards.append(player.cards.pop())
-                cardBeingCollected = player.cards.pop()
+                self.deck.cards.append(player.cards.pop())
                 # update the player name in the message
                 m.dealerTakesACardFromPlayer.updatePlayerName(player)
                 # update the message about this card being collected.
-                m.dealerTakesACardFromPlayer.whatToTransmit[1] = cardBeingCollected()
-                self.deck.cards.append(cardBeingCollected)
+                m.dealerTakesACardFromPlayer.whatToTransmit[1] = self.deck.cards[-1]()
                 # transmit the message
                 messenger.transmit(m.dealerTakesACardFromPlayer)
         # dealer will later also collect the community cards laid out on the table (a.k.a. 'the board')
@@ -275,6 +293,7 @@ class Dealer():
         m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
         messenger.transmit(m.aNewHandStarts)
         messenger.transmit(m.shufflingCardsPLACEHOLDER)
+        self.deck.cut()
         messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
         messenger.transmit(m.placeBlindsPLACEHOLDER)
         # Dealer deals to the players
@@ -367,32 +386,34 @@ class Table():
 ## ACTUAL PROGRAM ##
 ####################
 
-# create a deck of cards
-deckOfCards = Deck()
-
-# create a set of players interested in a game of poker at a particular table
-setOfPlayers = set()
-
-# create players
-setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
-for name in setOfPlayerNames:
-    setOfPlayers.add(Player(name, brain.allIn()))
-
-# define the number of hands to be played
-numberOfHands = 20000
-
-# create game
-game = Game(numberOfHands)
-
-# define the number of seats at the poker table
-numberOfSeats = 9
-
-# create a table
-table = Table(numberOfSeats)
-
-# create a dealer and give him the deck of cards.
-dealer = Dealer(deckOfCards, game, table, setOfPlayers)
-
-# run the game
-messenger.transmit(m.aNewRunStarts)
-dealer.playGame()
+if __name__ == "__main__":
+    # create a deck of cards
+    deckOfCards = Deck()
+    
+    # create a set of players interested in a game of poker at a particular table
+    setOfPlayers = set()
+    
+    # create players
+    setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+    for name in setOfPlayerNames:
+        setOfPlayers.add(Player(name, brain.allIn()))
+    
+    # define the number of hands to be played
+    numberOfHands = 20000
+    
+    # create game
+    game = Game(numberOfHands)
+    
+    # define the number of seats at the poker table
+    numberOfSeats = 9
+    
+    # create a table
+    table = Table(numberOfSeats)
+    
+    # create a dealer and give him the deck of cards.
+    dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+    
+    # run the game
+    messenger.transmit(m.aNewRunStarts)
+    dealer.playGame()
+    
