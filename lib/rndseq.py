@@ -1,4 +1,4 @@
-# pyRndOrg v0.2
+# pyRndOrg v0.1
 # random.org Python API
 #
 # Copyright 2009 Felix Rauch <toastwaffel(at)gmail.com>
@@ -16,14 +16,12 @@
 # whose possible arguments are explained in the README file
 # aswell as in each module.
 #
-# === Usage <rndint.py> ===
-# Gets a number of random integers
+# === Usage <rndseq.py> ===
+# Gets a sequence of integers
 #
-# get(min, max, [[num], [base]])
-# min : Minimum value
-# max : Maximum value
-# num : Number of integers to get (default: 1)
-# base: Mathematical base to be used (2/8/10/16) (default: 10)
+# get(min, max)
+# min : The lower bound of the interval (inclusive)
+# max : The upper bound of the interval (inclusive)
 #
 # For more information on usage and restrictions, 
 # read the README file or http://www.random.org/clients/http/
@@ -34,23 +32,25 @@
 import urllib.request
 from string import Template
 
-def get(min, max, num = 1, base = 10):
+def get(min, max):
+
     # Check quota
     quotachk = urllib.request.urlopen("http://www.random.org/quota/?format=plain")
     if int(quotachk.read()) <= 0:
         print("ERROR: Random.org: Your Quota limit is below zero. Try again later\n")
         return None
-    # Get and return integers
-    urltmp = Template("http://www.random.org/integers/"
-                      "?num=${num}&min=${min}&max=${max}&"
-                      "col=1&base=${base}&format=plain&rnd=new")
-    url = urltmp.substitute(num=num, min=min, max=max, base=base)
+
+    # Get and return sequence
+    urltmp = Template("http://www.random.org/sequences/?"
+                      "min=${min}&max=${max}&col=1&format=plain&rnd=new")
+    url = urltmp.substitute(min=min, max=max)
+
     dice = urllib.request.urlopen(url)
     strresult = dice.read()
     convstr = str(strresult, encoding='utf8')
     numlist = convstr.split("\n")
     numlist.pop()
-    returnlist = [int(i) for i in numlist]
+
     return numlist
 
 if __name__ == "__main__":

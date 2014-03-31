@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
 # How to debug this:
@@ -207,8 +207,8 @@ class Hand():
 
 class Game():
     """Currently it incorporates the rules of Texas Hold'em. We can later have a Rules() class which's instance can be given to either Game() or Dealer() to tell them how the game should be run.
-    The game will also have an endGameCondition (as an instance of Condition()) to tell when this game ends.
-    Right now this is simplified to a given numberOfHands which are played and then the game is over."""
+The game will also have an endGameCondition (as an instance of Condition()) to tell when this game ends.
+Right now this is simplified to a given numberOfHands which are played and then the game is over."""
     def __init__(self, numberOfHands):
         # number of hands is a preliminary construct, until we have implemented the custom endGameConditions properly.
         # until then, the game ends when a certain number of hands have been played.
@@ -344,7 +344,7 @@ class Dealer():
                 messenger.transmit(m.lastPlayerHasLeft)
                 self.letPlayersGo()
             # otherwise the game is over (This mustn't be elif!)
-            if len(self.table.listOfPlayersAtTheTable()) == 0: 
+            if len(self.table.listOfPlayersAtTheTable()) == 0:
                 break
         # update the game counter in the message
         m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
@@ -352,15 +352,15 @@ class Dealer():
 
 class Table():
     """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
-    It also inherently has a dealer who deals the cards to players and manages the pot."""
+It also inherently has a dealer who deals the cards to players and manages the pot."""
     def __init__(self, numberOfSeats):
         self.numberOfSeats = numberOfSeats
         # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
         self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
     def setOfEmptySeats(self):
         """This will check how many empty seats are there.
-        It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
-        (used when inviting players to the table, etc.)"""
+It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
+(used when inviting players to the table, etc.)"""
         emptySeats = set()
         for seatNumber, player in self.seats.items():
             if player is None:
@@ -416,4 +416,3 @@ if __name__ == "__main__":
     # run the game
     messenger.transmit(m.aNewRunStarts)
     dealer.playGame()
-    
