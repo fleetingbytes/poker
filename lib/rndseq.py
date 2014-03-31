@@ -37,8 +37,8 @@ def get(min, max):
     # Check quota
     quotachk = urllib.request.urlopen("http://www.random.org/quota/?format=plain")
     if int(quotachk.read()) <= 0:
-        return ("ERROR: Your Quota limit is below zero. Try again later\n"
-                "ERROR: or buy new random numbers @ random.org")
+        print("ERROR: Random.org: Your Quota limit is below zero. Try again later\n")
+        return None
 
     # Get and return sequence
     urltmp = Template("http://www.random.org/sequences/?"

@@ -38,8 +38,8 @@ def get(min, max, num = 1, base = 10):
     # Check quota
     quotachk = urllib.request.urlopen("http://www.random.org/quota/?format=plain")
     if int(quotachk.read()) <= 0:
-        return ("ERROR: Your Quota limit is below zero. Try again later\n"
-                "ERROR: or buy new random numbers @ random.org")
+        print("ERROR: Random.org: Your Quota limit is below zero. Try again later\n")
+        return None
     # Get and return integers
     urltmp = Template("http://www.random.org/integers/"
                       "?num=${num}&min=${min}&max=${max}&"
@@ -50,6 +50,7 @@ def get(min, max, num = 1, base = 10):
     convstr = str(strresult, encoding='utf8')
     numlist = convstr.split("\n")
     numlist.pop()
+    returnlist = [int(i) for i in numlist]
     return numlist
 
 if __name__ == "__main__":

@@ -1,10 +1,8 @@
-﻿#!/usr/bin/python
-# -*- coding: UTF_8 -*-
-
 from enum import Enum
 import random
-from lib import shuffle
+from shuffle import RealRandom
 import brain as b
+
 
 
 # TODO:
@@ -57,6 +55,8 @@ class Card():
             return cardNames[self.value] + cardColors[self.color]
         if parameter == "text":
             return self.value.name + " of " + self.color.name
+    def __str__(self):
+        return self("text")
 
 class Deck:
     def __init__(self):
@@ -113,24 +113,23 @@ class Deck:
         self.C3 = Card(CardValue.trey, CardColor.clubs)
         self.C2 = Card(CardValue.deuce, CardColor.clubs)
         self.cards = list((self.SA, self.SK, self.SQ, self.SJ, self.ST, self.S9, self.S8, self.S7, self.S6, self.S5, self.S4, self.S3, self.S2, self.HA, self.HK, self.HQ, self.HJ, self.HT, self.H9, self.H8, self.H7, self.H6, self.H5, self.H4, self.H3, self.H2, self.DA, self.DK, self.DQ, self.DJ, self.DT, self.D9, self.D8, self.D7, self.D6, self.D5, self.D4, self.D3, self.D2, self.CA, self.CK, self.CQ, self.CJ, self.CT, self.C9, self.C8, self.C7, self.C6, self.C5, self.C4, self.C3, self.C2))
-        self.cards = shuffle.shuffle(self.cards)
+        self.cards = RealRandom.shuffle(self.cards)
     def __call__(self, parameter="short"):
         listOfCards = list()
         for card in self.cards:
             listOfCards.append(card(parameter))
         return listOfCards
+    def __str__(self):
+        str = "Cards in deck: "
+        for card in self.cards:
+            str += card()+", "
+        return str
     def shuffl(self, method):
         pass
     def shuffle(self, shufflingSequence):
         # shufflingSequence is a list of shuffling methods, e.g. [wash, riffle, riffle, box, riffle, cut]
         for method in shufflingSequence:
             self.shuffl(self.cards)
-    def randomOrgShuffle(self):
-        # Seed Random Generator with true Random Value ans shuffle list
-        # random.seed(rndint.get(0, len(self.cards), 1).pop())
-        # random.shuffle(self.cards)
-        # rndint.get function reference: https://code.google.com/p/pyrndorg/source/browse/trunk/rndint.py?r=2
-        pass
     def deal(self, player):
         player.giveCard(self.cards.pop())
 
@@ -273,28 +272,126 @@ class Table():
 # create a deck of cards
 deckOfCards = Deck()
 
+print(deckOfCards)
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
+RealRandom.shuffle(deckOfCards.cards)
+print(deckOfCards)
+print(len(RealRandom.buffer))
+
 # create a dealer and give him the deck of cards.
-dealer = Dealer(deckOfCards)
+#dealer = Dealer(deckOfCards)
 
 # create a set of players interested in a game of poker at a particular table
-setOfPlayers = set()
+#setOfPlayers = set()
 
 # create players
-setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
-for name in setOfPlayerNames:
-    setOfPlayers.add(Player(name, b.allIn()))
+#setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+#for name in setOfPlayerNames:
+#    setOfPlayers.add(Player(name, b.allIn()))
 
 # define the number of hands to be played
-numberOfHands = 20000
+#numberOfHands = 20000
 
 # create game
-game = Game(numberOfHands)
+#game = Game(numberOfHands)
 
 # define the number of seats at the poker table
-numberOfSeats = 9
+#numberOfSeats = 9
 
 # create a table
-table = Table(numberOfSeats, dealer, game, setOfPlayers)
+#table = Table(numberOfSeats, dealer, game, setOfPlayers)
 
 # run the game
-table.playGame()
+#table.playGame()
