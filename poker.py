@@ -11,9 +11,9 @@
 # we need the following keypress routine in order to attach the script to the winpdb debugger (workaround for a bug in rpdb2.py)
 
 import msvcrt
-#msvcrt.getch()
+msvcrt.getch()
 
-import random
+import random, math
 import init
 import brain
 import messenger as m
@@ -152,16 +152,44 @@ class Deck:
         # if upper half, then µ is 19.5
         if bool(random.getrandbits(1)):
             µ = 19.5
-            Δ = 0
         else:
             µ = 35.5 # [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
-            Δ = 16
         σ = 2.2
+        # we set an upper and lower limit to the Gaussian distribution
+        limitDistribution = 4
         cardsTaken = 0
-        while (cardsTaken < (15 + Δ)) or (cardsTaken > (24 + Δ)):
+        while (cardsTaken < math.floor(µ - limitDistribution)) or (cardsTaken > math.ceil(µ + limitDistribution)):
             cardsTaken = random.gauss(µ, σ)
         cardsTaken = int(round(cardsTaken, 0))
         self.cards = self.cards[cardsTaken:] + self.cards[:cardsTaken]
+    def box(self):
+        """This divides the deck roughly into quarters and reverses their order."""
+        # Deck = Q1, Q2, Q3, Q4. Boxed deck = Q4, Q3, Q2, Q1
+        # we have 52 cards in the deck
+        cards = len(self.cards)
+        # prepare card counts in the quarters (here called boxes)
+        boxes = [0, 0, 0]
+        # gather boxing parameters from the init module
+        mus = (init.boxQ1mu, init.boxQ2mu, init.boxQ3mu)
+        sigmas = (init.boxQ1sigma, init.boxQ2sigma, init.boxQ3sigma)
+        limits = (init.boxQ1Limit, init.boxQ2Limit, init.boxQ3Limit)
+        # zip everything together
+        parameters = zip(boxes, mus, sigmas, limits, range(len(boxes)))
+        # we find the card counts (integers) in the first three quarters (loops 3x)
+        for box, mu, sigma, limit, boxIndex in parameters:
+            roundedMu = round(mu * cards)
+            while box not in range(roundedMu - limit, roundedMu + limit + 1):
+                box = round(cards * random.gauss(mu, sigma))
+            boxes[boxIndex] = box
+            # count the number of the remaining cards
+            cards = cards - box
+        # the fourth quarter's card count is the number of remaining cards after three quarters have been taken from it.
+        boxes.append(cards)
+        # Now we know the number of cards in each quarter of the deck, e.g. boxes = [14, 16, 12, 10]
+        # We must re-order the deck appropriately. That is:
+        # reorder the cards in the stack by grouping them into four groups and reversing the order of these groups. 
+        # the numbers of cards in each group is given in the list boxes, e.g. boxes = [14, 16, 12, 10]
+        self.cards = self.cards[sum(boxes[:3]):sum(boxes)] + self.cards[sum(boxes[:2]):sum(boxes[:3])] + self.cards[boxes[0]:sum(boxes[:2])] + self.cards[:boxes[0]]
     def shuffl(self, method):
         pass
     def shuffle(self, shufflingSequence):
@@ -248,7 +276,7 @@ class Dealer():
         for seatNumber, player in self.table.seats.items():
             # We have to check whether a player is sitting at this seat
             if player is not None:
-            # let the player decide whether he wants to leave the table
+                # let the player decide whether he wants to leave the table
                 player.brain.wantToLeaveTheTable = player.brain.tossACoin()
                 if player.brain.wantToLeaveTheTable:
                     self.table.seats[seatNumber] = None
@@ -258,7 +286,6 @@ class Dealer():
                     m.playerLeavesSeatNumberX.whatToTransmit[1] = str(seatNumber)
                     messenger.transmit(m.playerLeavesSeatNumberX)
     def dealCard(self, player):
-        # later we should only use player.receiveCard(self.deck.pop())
         # update the message about the dealer giving this player this card.
         m.dealerGivesPlayerACard.whatToTransmit[1] = self.deck.cards[-1]()
         # take the first card from the deck and give it to the player
@@ -276,7 +303,6 @@ class Dealer():
         # After each hand the dealer collects all cards from the players.
         for player in self.table.listOfPlayersAtTheTable():
             while player.cards:
-                # later we should only use self.deck.cards.append(player.cards.pop())
                 self.deck.cards.append(player.cards.pop())
                 # update the player name in the message
                 m.dealerTakesACardFromPlayer.updatePlayerName(player)
@@ -293,6 +319,7 @@ class Dealer():
         m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
         messenger.transmit(m.aNewHandStarts)
         messenger.transmit(m.shufflingCardsPLACEHOLDER)
+        self.deck.box()
         self.deck.cut()
         messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
         messenger.transmit(m.placeBlindsPLACEHOLDER)
