@@ -11,11 +11,12 @@
 # we need the following keypress routine in order to attach the script to the winpdb debugger (workaround for a bug in rpdb2.py)
 
 import msvcrt
-msvcrt.getch()
+#msvcrt.getch()
 
 import random, math
 import init
 import brain
+import shuffling
 import messenger as m
 from enum import Enum
 from lib import rndint # needed for true random shuffle of the deck of cards
@@ -137,6 +138,7 @@ class Deck:
         self.C3 = Card(CardValue.trey, CardColor.clubs)
         self.C2 = Card(CardValue.deuce, CardColor.clubs)
         self.cards = list((self.SA, self.SK, self.SQ, self.SJ, self.ST, self.S9, self.S8, self.S7, self.S6, self.S5, self.S4, self.S3, self.S2, self.HA, self.HK, self.HQ, self.HJ, self.HT, self.H9, self.H8, self.H7, self.H6, self.H5, self.H4, self.H3, self.H2, self.DA, self.DK, self.DQ, self.DJ, self.DT, self.D9, self.D8, self.D7, self.D6, self.D5, self.D4, self.D3, self.D2, self.CA, self.CK, self.CQ, self.CJ, self.CT, self.C9, self.C8, self.C7, self.C6, self.C5, self.C4, self.C3, self.C2))
+        self.cards.reverse()
     def __call__(self, parameter="short"):
         listOfCards = list()
         for card in self.cards:
@@ -190,12 +192,28 @@ class Deck:
         # reorder the cards in the stack by grouping them into four groups and reversing the order of these groups. 
         # the numbers of cards in each group is given in the list boxes, e.g. boxes = [14, 16, 12, 10]
         self.cards = self.cards[sum(boxes[:3]):sum(boxes)] + self.cards[sum(boxes[:2]):sum(boxes[:3])] + self.cards[boxes[0]:sum(boxes[:2])] + self.cards[:boxes[0]]
-    def shuffl(self, method):
-        pass
-    def shuffle(self, shufflingSequence):
-        # shufflingSequence is a list of shuffling methods, e.g. [wash, riffle, riffle, box, riffle, cut]
-        for method in shufflingSequence:
-            self.shuffl(self.cards)
+    def riffle(self):
+        # pick a riffle pattern:
+        pattern = random.choice(shuffling.listOfPatterns)
+        # divide the deck into an upper and a lower half, according to the pattern:
+        self.cards.reverse()
+        upperHalf = self.cards[:sum(pattern.upper)]
+        lowerHalf = self.cards[sum(pattern.upper):]
+        # create a dictionary of deck halves according to the pattern
+        halves = dict(zip([False, True], [upperHalf, lowerHalf]))
+        # riffle the cards according to the pattern
+        riffledCards = list()
+        for n, b in pattern:
+            for counter in range(n):
+                riffledCards.append(halves[b].pop())
+        self.cards = riffledCards
+    def casinoShuffle(self):
+        random.shuffle(self.cards)
+        self.riffle()
+        self.riffle()
+        self.box()
+        self.riffle()
+        self.cut()
     def randomOrgShuffle(self):
         # Seed Random Generator with true Random Value ans shuffle list
         # random.seed(rndint.get(0, len(self.cards), 1).pop())
@@ -319,8 +337,7 @@ class Dealer():
         m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
         messenger.transmit(m.aNewHandStarts)
         messenger.transmit(m.shufflingCardsPLACEHOLDER)
-        self.deck.box()
-        self.deck.cut()
+        self.deck.casinoShuffle()
         messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
         messenger.transmit(m.placeBlindsPLACEHOLDER)
         # Dealer deals to the players
@@ -416,7 +433,7 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
-    
+    deckOfCards.riffle()
     # create a set of players interested in a game of poker at a particular table
     setOfPlayers = set()
     
