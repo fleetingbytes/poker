@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF_8 -*-
 
+# GitHub: https://github.com/Nagidal/poker
+
 # How to debug this:
 # set path to Python27
 # run cmd in winpdb dir, then start winpdb by "python winpdb.py"
@@ -13,7 +15,7 @@
 import msvcrt
 #msvcrt.getch()
 
-import random, math
+import random, math, copy
 import init
 import brain
 import shuffling
@@ -21,6 +23,7 @@ import messenger as m
 from enum import Enum
 from lib import rndint # needed for true random shuffle of the deck of cards
 from optparse import OptionParser
+from collections import OrderedDict
 
 # Shortcuts and aliases:
 messenger = m.messenger
@@ -29,10 +32,13 @@ messenger = m.messenger
 parser = OptionParser(usage="%prog", version="%prog 0.0.2", prog="Poker Pie")
 parser.add_option("-v", "--verbose",dest="verbose", default=True, action="store_true", help="Report internal stuff")
 parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
+# If the script is executed with the shuffle option, the program will only generate shuffled decks and store them in a file.
+parser.add_option("-s", "--shuffle", dest="shuffleOnly", default=False, action="store_true", help="Shuffle only")
 (options,args) = parser.parse_args()
 
 init.verbose = options.verbose
 init.log = options.log
+init.shuffleOnly = options.shuffleOnly
 
 # If logging is enabled, create the necessary files:
 if init.log:
@@ -63,10 +69,10 @@ cardNames = dict(zip((CardValue.ace, CardValue.king, CardValue.queen, CardValue.
 # Color names:
 # S = spades, H = hearts, D = diamonds, C = clubs
 class CardColor(Enum):
-    spades = 4
-    hearts = 3
-    diamonds = 2
-    clubs = 1
+    spades = 3
+    hearts = 2
+    diamonds = 1
+    clubs = 0
 
 cardColors = dict(zip((CardColor.spades, CardColor.hearts, CardColor.diamonds, CardColor.clubs), ("S", "H", "D", "C")))
 
@@ -77,11 +83,18 @@ class Card():
     def __init__(self, value, color):
         self.value = value
         self.color = color
+        self.orderNumber = None
     def __call__(self, parameter="short"):
         if parameter == "short":
             return cardNames[self.value] + cardColors[self.color]
         if parameter == "text":
             return self.value.name + " of " + self.color.name
+        if parameter == "bits":
+            return (self.color.value<<4)+self.value.value
+
+def cardFromBits(bitcode):
+    """Creates a card according to the given bit code."""
+    return Card(CardValue(bitcode & 0b1111), CardColor(bitcode>>4))
 
 class Deck:
     def __init__(self):
@@ -222,6 +235,116 @@ class Deck:
         pass
     def pop(self):
         return self.cards.pop()
+    def store(self, filename):
+        # An efficient way how to store the sequence of the cards in the deck was suggested by Ross Millikan:
+        # http://math.stackexchange.com/questions/134815/minimum-number-of-bits-required-to-store-the-order-of-a-deck-of-cards
+        # For storing the order of cards in the deck most efficiently, we encode the fist 20 cards in it with 6 bits/card
+        # Then there are only 32 cards left to be encoded. The order of the first 16 of them can be stored only with 5 bits/card.
+        # Then there are only 16 cards left to be encoded. The order of the first 8 of them can be stored only with 4 bits/card.
+        # Then there are only 8 cards left to be encoded. The order of the first 4 of them can be stored only with 3 bits/card.
+        # Then there are only 4 cards left to be encoded. The order of the first 2 of them can be stored only with 2 bits/card.
+        # Then there are only 2 cards left to be encoded. The order of the first 1 of them can be stored only with 1 bits/card.
+        # Then there is only 1 card left. Its order does not need to be stored. It is the last card in the deck (0 bits/card).
+        # The order of cards in the whole deck needs 1*0+1*1+2*2+4*3+8*4+16*5+20*6 = 249 bits = 32 bytes
+        # We will store the 6-bit code of the first 20 cards
+        # 4 cards can be stored in 3 bytes, hence we will store 20 cards by storing 5 times 4 cards in 3 bytes
+        # We take a list of the first 20 cards in the deck (actually this is the last 20 cards, but it doesn't matter)
+        # Make a copy of the cards in the deck
+        for card in self():
+            print(self().index(card), card, file=savedCards)
+        cards = copy.deepcopy(self.cards)
+        # we will be reading the deck of cards from the back, so we'll reverse it here to read it from what was its front.
+        cards.reverse()
+        with open(filename, mode="ab+") as shufflings:
+            # write 6*20 bits = 15 bytes to represent the order of the first 20 cards (bytes 0-14, 0h-eh)
+            shufflings.write((cards.pop()("bits")<<18 ^ cards.pop()("bits")<<12 ^ cards.pop()("bits")<<6 ^ cards.pop()("bits")).to_bytes(3, byteorder="big"))
+            shufflings.write((cards.pop()("bits")<<18 ^ cards.pop()("bits")<<12 ^ cards.pop()("bits")<<6 ^ cards.pop()("bits")).to_bytes(3, byteorder="big"))
+            shufflings.write((cards.pop()("bits")<<18 ^ cards.pop()("bits")<<12 ^ cards.pop()("bits")<<6 ^ cards.pop()("bits")).to_bytes(3, byteorder="big"))
+            shufflings.write((cards.pop()("bits")<<18 ^ cards.pop()("bits")<<12 ^ cards.pop()("bits")<<6 ^ cards.pop()("bits")).to_bytes(3, byteorder="big"))
+            shufflings.write((cards.pop()("bits")<<18 ^ cards.pop()("bits")<<12 ^ cards.pop()("bits")<<6 ^ cards.pop()("bits")).to_bytes(3, byteorder="big"))
+            # There are 32 cards left in the deck. We make a sorted copy of it:
+            sortedCards = sorted(cards, key = lambda card: (card.color.value, card.value.value), reverse = False)
+            # We number the cards. The numbers assigned to them in the following loop will also be readable from cards
+            for i in range(32):
+                # This order number is like a 5-bit code for the card
+                sortedCards[i].orderNumber = i
+                print(i, sortedCards[i](), file=savedCards)
+            # write the 5-bit codes for the 16 cards, 5*16 = 80 bits = 10 bytes (positions 15-24 fh-18h):
+            shufflings.write((cards.pop().orderNumber<<(15*5) ^ cards.pop().orderNumber<<(14*5) ^ cards.pop().orderNumber<<(13*5) ^ cards.pop().orderNumber<<(12*5) ^ cards.pop().orderNumber<<(11*5) ^ cards.pop().orderNumber<<(10*5) ^ cards.pop().orderNumber<<(9*5) ^ cards.pop().orderNumber<<(8*5) ^ cards.pop().orderNumber<<(7*5) ^ cards.pop().orderNumber<<(6*5) ^ cards.pop().orderNumber<<(5*5) ^ cards.pop().orderNumber<<(4*5) ^ cards.pop().orderNumber<<(3*5) ^ cards.pop().orderNumber<<(2*5) ^ cards.pop().orderNumber<<5 ^ cards.pop().orderNumber).to_bytes(10, byteorder="big"))
+            # There are 16 cards remaining in the deck. We make a sorted copy of it:
+            sortedCards = sorted(cards, key = lambda card: (card.color.value, card.value.value), reverse = False)
+            # We number the cards from 0 to 15 (like a 4-bit code)
+            for i in range(16):
+                sortedCards[i].orderNumber = i
+            # write the 4-bit codes for the first 8 cards of them, 4*8 = 32 bits = 4 bytes (positions 25-28, 19h-1ch)
+            shufflings.write((cards.pop().orderNumber<<(7*4) ^ cards.pop().orderNumber<<(6*4) ^ cards.pop().orderNumber<<(5*4) ^ cards.pop().orderNumber<<(4*4) ^ cards.pop().orderNumber<<(3*4) ^ cards.pop().orderNumber<<(2*4) ^ cards.pop().orderNumber<<4 ^ cards.pop().orderNumber).to_bytes(4, byteorder="big"))
+            # There are now 8 cards left in the deck. We make a sorted copy of it:
+            sortedCards = sorted(cards, key = lambda card: (card.color.value, card.value.value), reverse = False)
+            # We number the cards from 0 to 7 (like a 3-bit code)
+            for i in range(8):
+                sortedCards[i].orderNumber = i
+            # Write the 3-bit codes for the first 4 cards of them, 3*4 = 12 bits = 2 bytes (positions 29-30, 1dh-1eh)
+            shufflings.write((cards.pop().orderNumber<<(3*3) ^ cards.pop().orderNumber<<(2*3) ^ cards.pop().orderNumber<<3 ^ cards.pop().orderNumber).to_bytes(2, byteorder="big"))
+            # There are now 4 cards left in the deck, we make a sorted copy of it:
+            sortedCards = sorted(cards, key = lambda card: (card.color.value, card.value.value), reverse = False)
+            # We number the cards from 0 to 3 (like a 2-bit code)
+            for i in range(4):
+                sortedCards[i].orderNumber = i
+            # Write the 2-bit codes of the last 4 cards in the deck, 2*4 = 8 bits = 1 byte (position 31, 1fh)
+            shufflings.write((cards.pop().orderNumber<<(3*2) ^ cards.pop().orderNumber<<(2*2) ^ cards.pop().orderNumber<<2 ^ cards.pop().orderNumber).to_bytes(1, byteorder="big"))
+    def readFromFile(self, filename):
+        with open(filename, mode="rb") as shufflings:
+            # create a new deck for referencing the orderNumbers
+            referenceDeck = Deck()
+            listOfShuffledCards = list()
+            encodedOrder = int.from_bytes(shufflings.read(15), byteorder="big")
+            for i in range(19, -1, -1):
+                bits = encodedOrder>>(i*6) & 0b111111
+                bitColor = bits>>4
+                bitValue = (bits & 0b1111) - 2
+                listOfShuffledCards.append(referenceDeck.cards[bitValue+(13*bitColor)])
+            # now we must pop those cards from the referenceDeck
+            for card in listOfShuffledCards:
+                referenceDeck.cards.remove(card)
+            # 20 cards are now removed from the reference deck, there are 32 cards left.
+
+            # read the next 10 bytes from the file
+            encodedOrder = int.from_bytes(shufflings.read(10), byteorder="big")
+            for i in range(15, -1, -1):
+                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*5) & 0b11111])
+            # now we must pop those cards from the referenceDeck
+            for card in listOfShuffledCards[20:]:
+                referenceDeck.cards.remove(card)
+            # 20+16 cards are now removed from the reference deck, there are 16 cards left (each encoded with 4 bits).
+
+            # read the next 4 bytes from the file (8 cards)
+            encodedOrder = int.from_bytes(shufflings.read(4), byteorder="big")
+            for i in range(7, -1, -1):
+                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*4) & 0b1111])
+            # now we must pop those cards from the referenceDeck
+            for card in listOfShuffledCards[20+16:]:
+                referenceDeck.cards.remove(card)
+            # 20+16+8 cards are now removed from the reference deck, there are 8 cards left (each encoded with 3 bits).
+
+            # read the next 2 bytes from the file (4 cards, each 3 bits)
+            encodedOrder = int.from_bytes(shufflings.read(2), byteorder="big")
+            for i in range(3, -1, -1):
+                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*3) & 0b111])
+            # now we must pop those cards from the referenceDeck
+            for card in listOfShuffledCards[20+16+8:]:
+                referenceDeck.cards.remove(card)
+            # 20+16+8+4 cards are now emoved from the reference deck, there are 4 cards left (each encoded with 2 bits).
+            
+            # read the next 1 byte from the file (4 cards, each 2 bits)
+            encodedOrder = int.from_bytes(shufflings.read(1), byteorder="big")
+            for i in range(3, -1, -1):
+                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*2) & 0b11])
+            # 20+16+8+4+4 cards are now emoved from the reference deck, all cards were read from the bytes.
+            
+            # Overwrite the cards in the deck with the listOfShuffledCards
+            self.cards = listOfShuffledCards
+            for card in self():
+                print(self().index(card), card, file=loadedCards)
 
 class Player():
     def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
@@ -433,30 +556,37 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
-    deckOfCards.riffle()
-    # create a set of players interested in a game of poker at a particular table
-    setOfPlayers = set()
-    
-    # create players
-    setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
-    for name in setOfPlayerNames:
-        setOfPlayers.add(Player(name, brain.allIn()))
-    
-    # define the number of hands to be played
-    numberOfHands = 20000
-    
-    # create game
-    game = Game(numberOfHands)
-    
-    # define the number of seats at the poker table
-    numberOfSeats = 9
-    
-    # create a table
-    table = Table(numberOfSeats)
-    
-    # create a dealer and give him the deck of cards.
-    dealer = Dealer(deckOfCards, game, table, setOfPlayers)
-    
-    # run the game
-    messenger.transmit(m.aNewRunStarts)
-    dealer.playGame()
+    # shuffle the deck
+    deckOfCards.casinoShuffle()
+    if init.shuffleOnly:
+        savedCards = open("saved.txt", mode="w", encoding="UTF-8")
+        deckOfCards.store("shufflings.bin")
+        loadedCards = open("loaded.txt", mode="w", encoding="UTF-8")
+        deckOfCards.readFromFile("shufflings.bin")
+    else:
+        # create a set of players interested in a game of poker at a particular table
+        setOfPlayers = set()
+        
+        # create players
+        setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+        for name in setOfPlayerNames:
+            setOfPlayers.add(Player(name, brain.allIn()))
+        
+        # define the number of hands to be played
+        numberOfHands = 20000
+        
+        # create game
+        game = Game(numberOfHands)
+        
+        # define the number of seats at the poker table
+        numberOfSeats = 9
+        
+        # create a table
+        table = Table(numberOfSeats)
+        
+        # create a dealer and give him the deck of cards.
+        dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+        
+        # run the game
+        messenger.transmit(m.aNewRunStarts)
+        dealer.playGame()

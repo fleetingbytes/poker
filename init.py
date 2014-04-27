@@ -12,14 +12,19 @@ class Nowhere():
 
 nowhere = Nowhere()
 
+# Program run parameters
+
 # Verbose reporing of internal stuff
 verbose = False 
 
-# Define possible targets where messages can be typed out
-msgTarget = {"screen":sys.stdout, "logfile":nowhere}
-
 # Keep track of whether logging is enabled or disabled
 log = None
+
+# If the script is executed with the shuffle option, the program will only generate shuffled decks and store them in a file.
+shuffleOnly = False
+
+# Define possible targets where messages can be typed out
+msgTarget = {"screen":sys.stdout, "logfile":nowhere}
 
 # dictionary of various counters (later to be replaced by some objects for long-term statistics)
 counter = dict(zip(["hand", "game"], [0, 0]))
