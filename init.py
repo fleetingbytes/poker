@@ -43,6 +43,7 @@ boxQ3mu = 0.5734107387239231
 boxQ3sigma = 0.11075727789906971
 boxQ3Limit = 7
 
+
 if __name__ == "__main__":
     for x in range(50):
         cards = 52
