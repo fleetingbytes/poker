@@ -89,12 +89,6 @@ class Card():
             return cardNames[self.value] + cardColors[self.color]
         if parameter == "text":
             return self.value.name + " of " + self.color.name
-        if parameter == "bits":
-            return (self.color.value<<4)+self.value.value
-
-def cardFromBits(bitcode):
-    """Creates a card according to the given bit code."""
-    return Card(CardValue(bitcode & 0b1111), CardColor(bitcode>>4))
 
 class Deck():
     def __init__(self):
@@ -248,19 +242,14 @@ class Deck():
         # The order of cards in the whole deck needs 1*0+1*1+2*2+4*3+8*4+16*5+20*6 = 249 bits = 32 bytes
         # We will do the following:
         # Take first 20 cards from the shuffled deck. For each card find its position in the sorted reference deck of cards.
-        # Append the card's reference position to the list of cards/numbers to be saved in the first 120 (20*6) bits.
-        # After this is done, remove the numbers from the saved list from the reference deck.
-        # Encode the order of numbers in the list in the 120 bits and store them.
-        cardsToStoreEachLoop = (20, 16, 8, 4, 4)
-        bitsPerCardEachLoop =  ( 6,  5, 4, 3, 2)
-        bytesEachLoop =        (15, 10, 4, 2, 1)
-        bitsPerByte = 8
+        # Append the card's reference position number to the list of numbers to be saved in the first 120 (20*6) bits.
+        # After this is done, remove these positions from the reference deck.
         cardsToSkipAtTheBeginningOfShuffledDeck = 0
         # create a sorted reference deck of cards.
         refDeck = sorted(copy.copy(self.cards), key = lambda card: (card.color.value, card.value.value), reverse = False)
         # prepare the list of card's reference position numbers
         with open(filename, mode="ab+") as shufflings:
-            for cardsToStore, bitsPerCard, bytesToBeUsed in zip(cardsToStoreEachLoop, bitsPerCardEachLoop, bytesEachLoop):
+            for cardsToStore, bitsPerCard, bytesToBeUsed in zip(init.cardsToStoreEachLoop, init.bitsPerCardEachLoop, init.bytesEachLoop):
                 numbersToStore = list()
                 for i in range(cardsToStore):
                     # find the position of the ith card in the deckToStore in the reference deck and append it to the list of numbers to be stored
@@ -277,59 +266,33 @@ class Deck():
                 numbersToStore.sort(reverse=True)
                 for number in numbersToStore:
                     refDeck.remove(refDeck[number])
-    def readFromFileOld(self, filename):
+    def readFromFile(self, filename="shuffled.dex"):
+        # prepare a reference deck:
+        refDeck = sorted(copy.copy(self.cards), key = lambda card: (card.color.value, card.value.value), reverse = False)
+        # prepare an empty deck
+        loadedDeck = list()
+        cardsToSkipAtTheBeginningOfLoadedDeck = 0
         with open(filename, mode="rb") as shufflings:
-            # create a new deck for referencing the orderNumbers
-            referenceDeck = Deck()
-            listOfShuffledCards = list()
-            encodedOrder = int.from_bytes(shufflings.read(15), byteorder="big")
-            for i in range(19, -1, -1):
-                bits = encodedOrder>>(i*6) & 0b111111
-                bitColor = bits>>4
-                bitValue = (bits & 0b1111) - 2
-                listOfShuffledCards.append(referenceDeck.cards[bitValue+(13*bitColor)])
-            # now we must pop those cards from the referenceDeck
-            for card in listOfShuffledCards:
-                referenceDeck.cards.remove(card)
-            # 20 cards are now removed from the reference deck, there are 32 cards left.
-
-            # read the next 10 bytes from the file
-            encodedOrder = int.from_bytes(shufflings.read(10), byteorder="big")
-            for i in range(15, -1, -1):
-                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*5) & 0b11111])
-            # now we must pop those cards from the referenceDeck
-            for card in listOfShuffledCards[20:]:
-                referenceDeck.cards.remove(card)
-            # 20+16 cards are now removed from the reference deck, there are 16 cards left (each encoded with 4 bits).
-
-            # read the next 4 bytes from the file (8 cards)
-            encodedOrder = int.from_bytes(shufflings.read(4), byteorder="big")
-            for i in range(7, -1, -1):
-                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*4) & 0b1111])
-            # now we must pop those cards from the referenceDeck
-            for card in listOfShuffledCards[20+16:]:
-                referenceDeck.cards.remove(card)
-            # 20+16+8 cards are now removed from the reference deck, there are 8 cards left (each encoded with 3 bits).
-
-            # read the next 2 bytes from the file (4 cards, each 3 bits)
-            encodedOrder = int.from_bytes(shufflings.read(2), byteorder="big")
-            for i in range(3, -1, -1):
-                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*3) & 0b111])
-            # now we must pop those cards from the referenceDeck
-            for card in listOfShuffledCards[20+16+8:]:
-                referenceDeck.cards.remove(card)
-            # 20+16+8+4 cards are now emoved from the reference deck, there are 4 cards left (each encoded with 2 bits).
-            
-            # read the next 1 byte from the file (4 cards, each 2 bits)
-            encodedOrder = int.from_bytes(shufflings.read(1), byteorder="big")
-            for i in range(3, -1, -1):
-                listOfShuffledCards.append(referenceDeck.cards[encodedOrder>>(i*2) & 0b11])
-            # 20+16+8+4+4 cards are now emoved from the reference deck, all cards were read from the bytes.
-            
-            # Overwrite the cards in the deck with the listOfShuffledCards
-            self.cards = listOfShuffledCards
-            for card in self():
-                print(self().index(card), card, file=loadedCards)
+            # We will read the saved information in similar loops like we saved them in .store()
+            for cardsToDecode, bitsPerCard, bytesToBeRead in zip(init.cardsToStoreEachLoop, init.bitsPerCardEachLoop, init.bytesEachLoop):
+                # prepare a list for the decoded numbers (cards's reference position numbes)
+                decodedNumbers = list()
+                hugeInteger = int.from_bytes(shufflings.read(bytesToBeRead), byteorder="big")
+                # We prepare a 6-bit filter (like a window) to read parts of the hugeInteger
+                window = 2 ** bitsPerCard - 1 # binary: 111111, 11111, 1111, 111, 11
+                for i in range(cardsToDecode):
+                    decodedNumbers.append(hugeInteger & window)
+                    hugeInteger = hugeInteger >> bitsPerCard
+                # reverse the list of decoded numbers
+                decodedNumbers.reverse()
+                # put the cards in the loadedDeck
+                for number in decodedNumbers:
+                    loadedDeck.append(refDeck[number])
+                # remove the loaded cards from the reference Deck
+                for card in loadedDeck[cardsToSkipAtTheBeginningOfLoadedDeck:]:
+                    refDeck.remove(card)
+                cardsToSkipAtTheBeginningOfLoadedDeck = cardsToSkipAtTheBeginningOfLoadedDeck + cardsToDecode
+        self.cards = loadedDeck
 
 class Player():
     def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
@@ -545,6 +508,7 @@ if __name__ == "__main__":
     deckOfCards.casinoShuffle()
     if init.shuffleOnly:
         deckOfCards.store()
+        deckOfCards.readFromFile()
     else:
         # create a set of players interested in a game of poker at a particular table
         setOfPlayers = set()

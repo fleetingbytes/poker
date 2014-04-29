@@ -44,6 +44,11 @@ boxQ3sigma = 0.11075727789906971
 boxQ3Limit = 7
 
 
+# Encoding and decoding the sequence of cards in the deck:
+cardsToStoreEachLoop = (20, 16, 8, 4, 4)
+bitsPerCardEachLoop =  ( 6,  5, 4, 3, 2)
+bytesEachLoop =        (15, 10, 4, 2, 1)
+
 if __name__ == "__main__":
     for x in range(50):
         cards = 52
