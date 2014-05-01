@@ -3,6 +3,8 @@
 
 # GitHub: https://github.com/Nagidal/poker
 
+# NEEDS: defusedxml
+
 # How to debug this:
 # set path to Python27
 # run cmd in winpdb dir, then start winpdb by "python winpdb.py"
@@ -15,30 +17,54 @@
 import msvcrt
 #msvcrt.getch()
 
-import random, math, copy
+import argparse, warnings, random, math, copy, inspect
 import init
 import brain
 import shuffling
 import messenger as m
 from enum import Enum
 from lib import rndint # needed for true random shuffle of the deck of cards
-from optparse import OptionParser
 from collections import OrderedDict
+from defusedxml import ElementTree
 
 # Shortcuts and aliases:
 messenger = m.messenger
 
-# OptionParser will parse command line argumenty
-parser = OptionParser(usage="%prog", version="%prog 0.0.2", prog="Poker Pie")
-parser.add_option("-v", "--verbose",dest="verbose", default=True, action="store_true", help="Report internal stuff")
-parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
-# If the script is executed with the shuffle option, the program will only generate shuffled decks and store them in a file.
-parser.add_option("-s", "--shuffle", dest="shuffleOnly", default=False, action="store_true", help="Shuffle only")
-(options,args) = parser.parse_args()
+# Parsing the arguments requires this modified version of FileType for argparse
+# source: http://stackoverflow.com/questions/8236954/specifying-default-filenames-with-argparse-but-not-opening-them-on-help
+class ForgivingFileType(argparse.FileType):
+    def __call__(self, string):
+        try:
+            super(ForgivingFileType,self).__call__(string)
+        except IOError as err:
+            warnings.warn(err)
 
-init.verbose = options.verbose
-init.log = options.log
-init.shuffleOnly = options.shuffleOnly
+parser = argparse.ArgumentParser(prog="Poker Pie")
+parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Report internal stuff")
+parser.add_argument("-n", "--nolog", dest="log", action="store_false", default=True, help="Don't log")
+parser.add_argument("-s", "--shuffleOnly", action="store_true", default=False, help="Shuffle only")
+parser.add_argument("-r", "--requirements", dest="requiredHandsFileName", metavar="file", default="", type=str, help="Read requirements from file (default: requirements.xml)")
+args = parser.parse_args()
+
+init.verbose = args.verbose
+init.log = args.log
+init.shuffleOnly = args.shuffleOnly
+init.requiredHands = args.requiredHandsFileName
+
+## OptionParser will parse command line argumenty
+#parser = OptionParser(usage="%prog", version="%prog 0.0.2", prog="Poker Pie")
+#parser.add_option("-v", "--verbose",dest="verbose", default=True, action="store_true", help="Report internal stuff")
+#parser.add_option("-n", "--nolog", dest="log", default=True, action="store_false", help="Don't log")
+## If the script is executed with the shuffle option, the program will only generate shuffled decks and store them in a file.
+#parser.add_option("-s", "--shuffle", dest="shuffleOnly", default=False, action="store_true", help="Shuffle only")
+#parser.add_option("-r", "--required", dest="requiredHands", default=False, action="store_true", help="Play the hands defined in the XML")
+#(options,args) = parser.parse_args()
+
+
+#init.verbose = options.verbose
+#init.log = options.log
+#init.shuffleOnly = options.shuffleOnly
+#init.requiredHands = options.requiredHands
 
 # If logging is enabled, create the necessary files:
 if init.log:
@@ -497,6 +523,7 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
                 sortedListOfPlayers.append(seats[i])
         return sortedListOfPlayers
 
+
 ####################
 ## ACTUAL PROGRAM ##
 ####################
@@ -504,18 +531,56 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
-    # shuffle the deck
-    deckOfCards.casinoShuffle()
     if init.shuffleOnly:
+        # shuffle the deck
+        deckOfCards.casinoShuffle()
         deckOfCards.store()
         deckOfCards.readFromFile()
+    elif init.requiredHands:
+        # parse the requirements.xml ("requirements.xml" is stored in init.requiredHands)
+        tree = ElementTree.parse(init.requiredHands)
+        session = tree.getroot()
+        try:
+            numberOfHandsToPlay = int(session.attrib["hands"])
+        except:
+            numberOfHandsToPlay = init.numberOfHandsToPlay
+        try:
+            numberOfSeatsAtTable = int(session[0].find("table").attrib["seats"])
+        except:
+            numberOfSeatsAtTable = init.numberOfSeatsAtTable
+        try:
+            forcedPlay = bool(session[0].find("table").attrib["forcedPlay"])
+        except:
+            forcedPlay = init.forcedPlay
+        # read or create a set of players
+        setOfPlayers = set()
+        # create a dictionary of brains
+        brains = dict(inspect.getmembers(brain, predicate=inspect.isclass))
+        try:
+            for player in session.iter("player"):
+                # if it finds a player, check whether player's name and brain is defined
+                try:
+                    playerName = player["name"]
+                except:
+                    playerName = random.sample(init.setOfPlayerNames, 1)[0]
+                try:
+                    playerBrain = player["brain"]
+                except:
+                    playerBrain = brains[init.playerBrain]()
+                setOfPlayers.add(Player(playerName, playerBrain))
+        except:
+            pass
+        listOfVariables = [numberOfHandsToPlay, numberOfSeatsAtTable, forcedPlay]
+        for variable in listOfVariables:
+            print(variable)
+        for player in setOfPlayers:
+            print(player.name, player.brain.name)
     else:
         # create a set of players interested in a game of poker at a particular table
         setOfPlayers = set()
         
         # create players
-        setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
-        for name in setOfPlayerNames:
+        for name in init.setOfPlayerNames:
             setOfPlayers.add(Player(name, brain.allIn()))
         
         # define the number of hands to be played

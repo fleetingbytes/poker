@@ -49,6 +49,13 @@ cardsToStoreEachLoop = (20, 16, 8, 4, 4)
 bitsPerCardEachLoop =  ( 6,  5, 4, 3, 2)
 bytesEachLoop =        (15, 10, 4, 2, 1)
 
+#Default requirements
+numberOfHandsToPlay = 1
+numberOfSeatsAtTable = 8
+forcedPlay = True
+setOfPlayerNames = set(["Bob", "Quinn", "Jeff", "Lewis", "Sven", "John", "Mary", "Marc", "Gary", "Marlana", "Blanch", "Cathey", "Bruno", "Violeta", "Barton", "Fran", "Hubert", "Barbara", "Nydia", "Cinda", "Enid", "Dalton", "Shae", "Verda", "Tomas", "Terina", "Robin", "Pricilla", "Melba", "Suzan", "Johna", "Shawanda", "Rema", "Madeleine", "Sherilyn", "Lyndsay", "Sau", "Monserrate", "Denice", "Ramonita", "Kenyetta", "Cara", "Caryl", "Olga", "Rosenda", "Lorene", "Kellie", "Myrl", "Carleen", "Porter", "Laurine", "Lucila", "Felisha", "Candace", "Dagny", "Temple", "Lacey", "Estela", "Alexis"])
+playerBrain = "allIn"
+
 if __name__ == "__main__":
     for x in range(50):
         cards = 52

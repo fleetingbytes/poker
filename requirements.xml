@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session hands="3">
+    <handRequirements>
+        <table seats="8" forcedPlay="True" />
+        <players>
+            <player handType="AKo" />
+            <player handType="TT" />
+            <player />
+            <player />
+            <player />
+            <player />
+            <player />
+            <player />
+        </players>
+    </handRequirements>
+</session>
