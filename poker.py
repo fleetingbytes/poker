@@ -172,6 +172,21 @@ class Deck():
         self.C2 = Card(CardValue.deuce, CardColor.clubs)
         self.cards = list((self.SA, self.SK, self.SQ, self.SJ, self.ST, self.S9, self.S8, self.S7, self.S6, self.S5, self.S4, self.S3, self.S2, self.HA, self.HK, self.HQ, self.HJ, self.HT, self.H9, self.H8, self.H7, self.H6, self.H5, self.H4, self.H3, self.H2, self.DA, self.DK, self.DQ, self.DJ, self.DT, self.D9, self.D8, self.D7, self.D6, self.D5, self.D4, self.D3, self.D2, self.CA, self.CK, self.CQ, self.CJ, self.CT, self.C9, self.C8, self.C7, self.C6, self.C5, self.C4, self.C3, self.C2))
         self.cards.reverse()
+        # We need to creade a dicitonary of pointers to the cards of this deck
+        # We use a custom function to list all attributes and methods of this class
+        def get_user_attributes(cls):
+            """found at http://stackoverflow.com/questions/4241171/inspect-python-class-attributes"""
+            boring = dir(type('dummy', (object,), {}))
+            return [item
+                for item in inspect.getmembers(cls)
+                if item[0] not in boring]
+        self.pointersToCards = dict(get_user_attributes(self))
+        # delete unnecessary entries in pointersToCards
+        for key in list(self.pointersToCards.keys()):
+            # delete every key which is longer than two characters (all cards are tewo characters long, they will remain in the dictionary)
+            if len(key) > 2:
+                del self.pointersToCards[key]
+        del get_user_attributes
     def __call__(self, parameter="short"):
         listOfCards = list()
         for card in self.cards:
@@ -320,25 +335,38 @@ class Deck():
                 cardsToSkipAtTheBeginningOfLoadedDeck = cardsToSkipAtTheBeginningOfLoadedDeck + cardsToDecode
         self.cards = loadedDeck
 
-class Player():
-    def __init__(self, playerName, brain, wantsToJoinAGame=True, wantsToLeaveAGame=False):
-        self.name = playerName
-        self.brain = brain
+class Hand():
+    def __init__(self, requiredCardsString="", requiredHandType=""):
         self.cards = set()
-        self.wantsToJoinAGame = wantsToJoinAGame
-        self.wantsToLeaveAGame = wantsToLeaveAGame
+        self.requiredCardsString = requiredCardsString
+        self.requiredHandType
     def receiveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
-        # this will print the player's cards ordered
+        # this return the cards in a list ordered by the cards' value
         return sorted(self.cards, key = lambda card: (card.value.value, card.color.value), reverse = True)
     def typePocketCards(self, parameter="short"):
         for card in self.pocketCards():
             print(card(parameter))
     def pocketPair(self):
+        """returns True if cards are pocket pair, else: False"""
         return self.pocketCards()[0].value == self.pocketCards()[1].value
     def suitedCards(self):
+        """returns True if cards are suited, False if off-suite"""
         return self.pocketCards()[0].color == self.pocketCards()[1].color
+    def requiredCards(self):
+        pass
+        
+
+class Player():
+    def __init__(self, playerName, brain, requiredCardsString="", requiredHandType="", wantsToJoinAGame=True, wantsToLeaveAGame=False):
+        self.name = playerName
+        self.brain = brain
+        self.cards = set()
+        self.wantsToJoinAGame = wantsToJoinAGame
+        self.wantsToLeaveAGame = wantsToLeaveAGame
+        self.hand = Hand(requiredCardsString, requiredHandType)
+
 
 #next:
 # Class Hand(listOfPlayers)
@@ -531,6 +559,7 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
+    print(deckOfCards.pointersToCards)
     if init.shuffleOnly:
         # shuffle the deck
         deckOfCards.casinoShuffle()
