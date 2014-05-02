@@ -15,7 +15,7 @@
 # we need the following keypress routine in order to attach the script to the winpdb debugger (workaround for a bug in rpdb2.py)
 
 import msvcrt
-#msvcrt.getch()
+msvcrt.getch()
 
 import argparse, warnings, random, math, copy, inspect
 import init
@@ -335,11 +335,15 @@ class Deck():
                 cardsToSkipAtTheBeginningOfLoadedDeck = cardsToSkipAtTheBeginningOfLoadedDeck + cardsToDecode
         self.cards = loadedDeck
 
-class Hand():
-    def __init__(self, requiredCardsString="", requiredHandType=""):
+class Player():
+    def __init__(self, playerName, brain, requiredCards="", requiredHandType="", wantsToJoinAGame=True, wantsToLeaveAGame=False):
+        self.name = playerName
+        self.brain = brain
         self.cards = set()
-        self.requiredCardsString = requiredCardsString
-        self.requiredHandType
+        self.requiredCards = requiredCards
+        self.requiredHandType = requiredHandType
+        self.wantsToJoinAGame = wantsToJoinAGame
+        self.wantsToLeaveAGame = wantsToLeaveAGame
     def receiveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
@@ -354,18 +358,6 @@ class Hand():
     def suitedCards(self):
         """returns True if cards are suited, False if off-suite"""
         return self.pocketCards()[0].color == self.pocketCards()[1].color
-    def requiredCards(self):
-        pass
-        
-
-class Player():
-    def __init__(self, playerName, brain, requiredCardsString="", requiredHandType="", wantsToJoinAGame=True, wantsToLeaveAGame=False):
-        self.name = playerName
-        self.brain = brain
-        self.cards = set()
-        self.wantsToJoinAGame = wantsToJoinAGame
-        self.wantsToLeaveAGame = wantsToLeaveAGame
-        self.hand = Hand(requiredCardsString, requiredHandType)
 
 
 #next:
@@ -515,6 +507,8 @@ class Dealer():
             # otherwise the game is over (This mustn't be elif!)
             if len(self.table.listOfPlayersAtTheTable()) == 0:
                 break
+        # reset the hand counter
+        init.counter["hand"] = 0
         # update the game counter in the message
         m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
         messenger.transmit(m.endingGameNumberX)
@@ -522,10 +516,12 @@ class Dealer():
 class Table():
     """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
 It also inherently has a dealer who deals the cards to players and manages the pot."""
-    def __init__(self, numberOfSeats):
+    def __init__(self, numberOfSeats, forcedPlay=False):
         self.numberOfSeats = numberOfSeats
         # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
         self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
+        # forcedPlay says whether players have to play whether they want or not. If true, every player must take a seat (if available) and play
+        self.forcedPlay = forcedPlay
     def setOfEmptySeats(self):
         """This will check how many empty seats are there.
 It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
@@ -559,7 +555,8 @@ It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
 if __name__ == "__main__":
     # create a deck of cards
     deckOfCards = Deck()
-    print(deckOfCards.pointersToCards)
+    # create a dictionary of brains
+    dictionaryOfBrains = dict(inspect.getmembers(brain, predicate=inspect.isclass))
     if init.shuffleOnly:
         # shuffle the deck
         deckOfCards.casinoShuffle()
@@ -568,42 +565,52 @@ if __name__ == "__main__":
     elif init.requiredHands:
         # parse the requirements.xml ("requirements.xml" is stored in init.requiredHands)
         tree = ElementTree.parse(init.requiredHands)
-        session = tree.getroot()
         try:
-            numberOfHandsToPlay = int(session.attrib["hands"])
-        except:
-            numberOfHandsToPlay = init.numberOfHandsToPlay
-        try:
-            numberOfSeatsAtTable = int(session[0].find("table").attrib["seats"])
-        except:
-            numberOfSeatsAtTable = init.numberOfSeatsAtTable
-        try:
-            forcedPlay = bool(session[0].find("table").attrib["forcedPlay"])
-        except:
-            forcedPlay = init.forcedPlay
-        # read or create a set of players
-        setOfPlayers = set()
-        # create a dictionary of brains
-        brains = dict(inspect.getmembers(brain, predicate=inspect.isclass))
-        try:
-            for player in session.iter("player"):
-                # if it finds a player, check whether player's name and brain is defined
+            for session in tree.getroot():
+                # create a game with the given number of hands
                 try:
-                    playerName = player["name"]
+                    numberOfHandsToPlay = int(session.find("game").attrib["hands"])
                 except:
-                    playerName = random.sample(init.setOfPlayerNames, 1)[0]
+                    numberOfHandsToPlay = init.numberOfHandsToPlay
+                game = Game(numberOfHandsToPlay)
+                # create a table with the given number of seats
                 try:
-                    playerBrain = player["brain"]
+                    numberOfSeatsAtTable = int(session.find("table").attrib["seats"])
                 except:
-                    playerBrain = brains[init.playerBrain]()
-                setOfPlayers.add(Player(playerName, playerBrain))
+                    numberOfSeatsAtTable = init.numberOfSeatsAtTable
+                try:
+                    forcedPlay = bool(session.find("table").attrib["forcedPlay"])
+                except:
+                    forcedPlay = init.forcedPlay
+                table = Table(numberOfSeatsAtTable, forcedPlay)
+                # read or create a set of players
+                setOfPlayers = set()
+                try:
+                    for player in session.find("players"):
+                        # if it finds a player, check whether player's name and brain is defined
+                        try:
+                            playerName = player["name"]
+                        except:
+                            playerName = random.sample(init.setOfPlayerNames, 1)[0]
+                        try:
+                            playerBrain = player["brain"]
+                        except:
+                            playerBrain = dictionaryOfBrains[init.playerBrain]()
+                        setOfPlayers.add(Player(playerName, playerBrain))
+                except:
+                    # if no set of players is specified, take the default set of players
+                    for playerName in init.setOfPlayerNames:
+                        setOfPlayers.add(Player(playerName, dictionaryOfBrains[init.playerBrain]()))
+                # create the dealer for the session:
+                dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+                # run the session
+                messenger.transmit(m.aNewRunStarts)
+                dealer.playGame()
         except:
-            pass
-        listOfVariables = [numberOfHandsToPlay, numberOfSeatsAtTable, forcedPlay]
-        for variable in listOfVariables:
-            print(variable)
-        for player in setOfPlayers:
-            print(player.name, player.brain.name)
+            # update the name of requirements.xml in the message:
+            m.couldNotParseRequirements.whatToTransmit[1] = init.requiredHands
+            # transmit a message that you could not parse requirements.xml
+            messenger.transmit(m.couldNotParseRequirements)
     else:
         # create a set of players interested in a game of poker at a particular table
         setOfPlayers = set()

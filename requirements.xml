@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<session hands="3">
-    <handRequirements>
+<requirements>
+    <session>
+        <game hands="3" />
         <table seats="8" forcedPlay="True" />
         <players>
             <player handType="AKo" />
             <player handType="TT" />
             <player />
+            <player hand="C8D7" />
             <player />
-            <player />
-            <player />
+            <player hand="HJS8"/>
             <player />
             <player />
         </players>
-    </handRequirements>
-</session>
+    </session>
+    <session>
+        <game hands="2"/>
+        <table seats="4" forcedPlay="True" />
+        <players>
+            <player handType="JTs" />
+            <player handType="22" />
+            <player />
+            <player />
+            <player />
+            <player />
+            <player hand="H7D3" />
+            <player hand="CKHQ" />
+        </players>
+    </session>
+</requirements>

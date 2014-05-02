@@ -158,6 +158,8 @@ dealerGivesPlayerACard = Message(["Dealer gives PLAYERNAME", "CARD"],
 dealerTakesACardFromPlayer = Message(["Dealer takes", "CARD", "from PLAYERNAME"], 
                                      ["Dealer takes"], " ", onlyIfVerbose, everywhere)
 
+couldNotParseRequirements = Message(["Could not parse", "REQUIREMENTS"],
+                                    ["Could not parse"], " ", everytime, everywhere)
 messenger = Messenger()
 
 if __name__ == "__main__":
