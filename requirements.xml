@@ -1,31 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <requirements>
     <session>
-        <game type="dealAndCollect" hands="3" />
+        <game type="comparePocketCards" hands="11492" />
         <table seats="8" />
         <players>
-            <player name="Tom" handType="AKo" seat="1" forcedToPlay="True" />
-            <player name="Sven" handType="TT" seat="7" forcedToPlay="True" />
-            <player />
-            <player name="Robert" hand="C8D7" seat="4" forcedToPlay="True" />
-            <player />
-            <player name="Penelope" hand="HJS8" forcedToPlay="True" />
-            <player name="Herbert" hand="S4S3" forcedToPlay="True"/>
-            <player />
-        </players>
-    </session>
-    <session>
-        <game type="dealAndCollect" hands="2" />
-        <table seats="4" forcedToPlay="True" />
-        <players>
-            <player name="Karl" handType="JTs" forcedToPlay="True" />
-            <player name="Richard" handType="22" forcedToPlay="True" />
             <player />
             <player />
             <player />
             <player />
-            <player name="Samantha" hand="H7D3" seat="4" forcedToPlay="True" />
-            <player name="Gwynn" hand="CKHQ" seat="3" forcedToPlay="True" />
+            <player />
+            <player />
+            <player />
+            <player />
         </players>
     </session>
 </requirements>

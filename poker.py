@@ -348,11 +348,10 @@ class Player():
     def receiveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
-        # this return the cards in a list ordered by the cards' value
+        # this returns the cards in a list ordered by the cards' value
         return sorted(self.cards, key = lambda card: (card.value.value, card.color.value), reverse = True)
     def typePocketCards(self, parameter="short"):
-        for card in self.pocketCards():
-            print(card(parameter))
+        return self.pocketCards()[0](parameter) + self.pocketCards()[1](parameter)
     def pocketPair(self):
         """returns True if cards are pocket pair, else: False"""
         return self.pocketCards()[0].value == self.pocketCards()[1].value
@@ -568,13 +567,9 @@ if __name__ == "__main__":
     deckOfCards = Deck()
     # create a dictionary of brains
     dictionaryOfBrains = dict(inspect.getmembers(brain, predicate=inspect.isclass))
+    # create a dictionary of games
     dictionaryOfGames = dict(inspect.getmembers(game, predicate=inspect.isclass))
-    if init.shuffleOnly:
-        # shuffle the deck
-        deckOfCards.casinoShuffle()
-        deckOfCards.store()
-        deckOfCards.readFromFile()
-    elif init.requiredHands:
+    if init.requiredHands:
         # parse the requirements.xml ("requirements.xml" is stored in init.requiredHands)
         tree = ElementTree.parse(init.requiredHands)
         try:
@@ -592,29 +587,3 @@ if __name__ == "__main__":
             m.couldNotParseRequirements.whatToTransmit[1] = init.requiredHands
             # transmit a message that you could not parse requirements.xml
             messenger.transmit(m.couldNotParseRequirements)
-    else:
-        # create a set of players interested in a game of poker at a particular table
-        setOfPlayers = set()
-        
-        # create players
-        for name in init.setOfPlayerNames:
-            setOfPlayers.add(Player(name, brain.allIn()))
-        
-        # define the number of hands to be played
-        numberOfHands = 20000
-        
-        # create game
-        game = Game(numberOfHands)
-        
-        # define the number of seats at the poker table
-        numberOfSeats = 9
-        
-        # create a table
-        table = Table(numberOfSeats)
-        
-        # create a dealer and give him the deck of cards.
-        dealer = Dealer(deckOfCards, table, setOfPlayers)
-        
-        # run the game
-        messenger.transmit(m.aNewRunStarts)
-        dealer.playGame()

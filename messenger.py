@@ -90,7 +90,7 @@ placeBlindsPLACEHOLDER = Message(["Placing blinds."],
                                  ["Placing blinds."], " ", everytime, everywhere)
 
 dealCardsToPlayersPLACEHOLDER = Message(["Deal cards to the players."],
-                                        ["Deal cards to the players."], " ", everytime, everywhere)
+                                        ["Deal cards to the players."], " ", onlyIfVerbose, logOnly)
 
 preFlopBetPLACEHOLDER = Message(["Pre-flop bet, move money to the pot."],
                                 ["Pre-flop bet, move money to the pot."], " ", everytime, everywhere)
@@ -123,7 +123,7 @@ transferPotToWinnerPLACEHOLDER = Message(["Transfer the pot to the winner."],
                                          ["Transfer the pot to the winner."], " ", everytime, everywhere)
 
 collectCardsToDeckPLACEHOLDER = Message(["Collect the cards to the deck."],
-                                        ["Collect the cards to the deck."], " ", everytime, everywhere)
+                                        ["Collect the cards to the deck."], " ", onlyIfVerbose, logOnly)
 
 xPlayersWantToJoinAGame = Message(["NUMBER", "players want to join a game."],
                                   ["players want to join a game."], " ", everytime, everywhere)
