@@ -69,7 +69,7 @@ init.requiredHands = args.requiredHandsFileName
 # If logging is enabled, create the necessary files:
 if init.log:
     # general log file
-    logfile = open("log.txt", mode="a", encoding="UTF_8")
+    logfile = open("log.txt", mode="w", encoding="UTF_8")
     # include this logfile in the set of targets for messages
     init.msgTarget["logfile"] = logfile
 
@@ -336,14 +336,16 @@ class Deck():
         self.cards = loadedDeck
 
 class Player():
-    def __init__(self, playerName, brain, requiredCards="", requiredHandType="", wantsToJoinAGame=True, wantsToLeaveAGame=False):
+    def __init__(self, playerName, brain, requiredCards="", requiredHandType="", requiredSeat=None):
         self.name = playerName
         self.brain = brain
         self.cards = set()
         self.requiredCards = requiredCards
         self.requiredHandType = requiredHandType
-        self.wantsToJoinAGame = wantsToJoinAGame
-        self.wantsToLeaveAGame = wantsToLeaveAGame
+        try:
+            self.requiredSeat = requiredSeat - 1 # we subtract one from the seat number because list of seats starts with 0
+        except TypeError:
+            self.requiredSeat = requiredSeat
     def receiveCard(self, card):
             self.cards.add(card)
     def pocketCards(self):
@@ -384,42 +386,72 @@ class Dealer():
         self.game = game
         self.table = table
         self.setOfPlayers = setOfPlayers
+        self.FTPNRAS = list() # of players who are forced to play but do not require any particular seat
+        self.WTPNRASNFTP = list() # of players who want to play, do not require any particular seat and are not forced to play
     def invitePlayers(self):
-        """This function maps players who want to join a game to a free seat at the table."""
-        # from the set of all players we make a list of players who want to join a game.
-        listOfPlayersToJoinAGame = list()
+        """This function maps players who want to join a game to a seat at the table."""
+        # We will go through all seats at the table.
+        # if there are any unseated players we will try to fill this seat with a player.
+        # certain players are more important to get a seat than others.
+        # There is four priority groups of players ranked in this order:
+        # 1. FTP & RTS (players who are Forced To Play and Require This Seat)
+        # 2. WTP & RTS & NFTP (players who Want To Play and Require This Seat but are Not Forced to Play)
+        # 3. FTP & NRTS (players who are Forced To Play but do not Require This Seat)
+        # 4. WTP & NFTP & RAS (players who Want To Play, but are Not Forced To Play and do not Require Any Seat)
+        # before we seat the players, we will create the list of candidates for each seat
         for player in self.setOfPlayers:
-            if player.wantsToJoinAGame:
-                listOfPlayersToJoinAGame.append(player)
-        # update the message about how many players want to join a game
-        m.xPlayersWantToJoinAGame.whatToTransmit[0] = str(len(listOfPlayersToJoinAGame))
-        # transmit the message
-        messenger.transmit(m.xPlayersWantToJoinAGame, positionInWhatToTransmitWhichShouldBeRandomized=1)
-        # since we want the players to be seated at the table randomly, we will shuffle this list
-        random.shuffle(listOfPlayersToJoinAGame)
-        # for each player taking a seat at the table we will put him into the table's seats dictionary
-        # and transmit a message saying which player took which seat
-        for (player, seatNumber) in zip(listOfPlayersToJoinAGame, self.table.setOfEmptySeats()):
-            self.table.seats[seatNumber] = player
-            # update the message about player taking a seat
-            m.playerTakesSeatNumberX.updatePlayerName(player)
-            # update the seatnumber in the message
-            m.playerTakesSeatNumberX.whatToTransmit[1] = str(seatNumber)
-            messenger.transmit(m.playerTakesSeatNumberX)
+            # if a player is forced to play and requires a particular seat, append him to the appropriate list
+            if player.brain.forcedToPlay and (player.requiredSeat is not None):
+                # append him to the FTPRTS list
+                self.table.seat[player.requiredSeat].FTPRTS.append(player)
+            # if the player wants to play, requires a particular seat, but is not forced to play
+            elif player.brain.wantToJoinAGame and (player.requiredSeat is not None) and (not player.brain.forcedToPlay):
+                # append him to the WTPRTSNFTP list
+                self.table.seat[player.requiredSeat].WTPRTSNFTP.append(player)
+            # if the player is forced to play but does not require any particular seat
+            elif player.brain.forcedToPlay and (player.requiredSeat is None):
+                # append him to the FTPNRAS list
+                self.FTPNRAS.append(player)
+            # if the player wants to play, does not require any particular seat and is not forced to play
+            elif player.brain.wantToJoinAGame and (player.requiredSeat is None) and (not player.brain.forcedToPlay):
+                # append him to the WTPNRASNFTP list
+                self.WTPNRASNFTP.append(player)
+        # each seat now has filled its lists of candidates with players who are interested in that seat.
+        # go through the seats and pick a player for it from the higherst ranked list of candidates
+        for thisSeat in self.table.seat:
+            # find the highest ranked non-empty list:
+            highestList = [x for x in [thisSeat.FTPRTS, thisSeat.WTPRTSNFTP, self.FTPNRAS, self.WTPNRASNFTP] if x != list()]
+            # pick a random member of the highestList of the ranked player lists
+            for aList in highestList:
+                # seat the player
+                thisSeat.player = random.choice(aList)
+                # delete the player from the list
+                aList.remove(thisSeat.player)
+                # prepare the message about this player taking this seat
+                m.playerTakesSeatNumberX.whatToTransmit[1] = str(thisSeat.number)
+                m.playerTakesSeatNumberX.updatePlayerName(thisSeat.player)
+                # transmit the message
+                messenger.transmit(m.playerTakesSeatNumberX)
+                break
+            # empty thisSeat's candidate lists to prepare them for the next round
+            thisSeat.FTPRTS = list()
+            thisSeat.WTPRTSNFTP = list()
+        # empty the general lists to prepare them for the next round
+        self.FTPNRAS = list()
+        self.WTPNRASNFTP = list()
     def letPlayersGo(self):
         # Until players get more sophisticated brains, they decide randomly whether they want to leave the table or not.
-        for seatNumber, player in self.table.seats.items():
+        for thisSeat in self.table.seat:
             # We have to check whether a player is sitting at this seat
-            if player is not None:
+            if thisSeat.player is not None:
                 # let the player decide whether he wants to leave the table
-                player.brain.wantToLeaveTheTable = player.brain.tossACoin()
-                if player.brain.wantToLeaveTheTable:
-                    self.table.seats[seatNumber] = None
+                if thisSeat.player.brain.wantToLeaveAGame():
                     # update the message about player leaving the seat
-                    m.playerLeavesSeatNumberX.updatePlayerName(player)
+                    m.playerLeavesSeatNumberX.updatePlayerName(thisSeat.player)
                     # update the seatnumber in the message
-                    m.playerLeavesSeatNumberX.whatToTransmit[1] = str(seatNumber)
+                    m.playerLeavesSeatNumberX.whatToTransmit[1] = str(thisSeat.number)
                     messenger.transmit(m.playerLeavesSeatNumberX)
+                    thisSeat.player = None
     def dealCard(self, player):
         # update the message about the dealer giving this player this card.
         m.dealerGivesPlayerACard.whatToTransmit[1] = self.deck.cards[-1]()
@@ -513,40 +545,83 @@ class Dealer():
         m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
         messenger.transmit(m.endingGameNumberX)
 
+class Seat():
+    """A seat will keep track of the players who are interested in taking it.
+    It will distiguish between different groups of players, ranked by the importance of their presence at the table."""
+    def __init__(self, number, player):
+        self.number = number # technically, we are storing the seat number twice. Once as an index of the list table.seat and then here. /-:
+        self.FTPRTS = list() # list of players who are forced to play and require this seat
+        self.WTPRTSNFTP = list() # list of players who want to play, require this seat but are not forced to play
+        # [list of players who are forced to play but do not require any particular seat] will not be stored in any seat since it is the same list for every seat. This list will be generated externally.
+        # [list of players who want to play, do not require any particular seat and are not forced to play] will not be stored in any seat since it is the same list for every seat. This list will be generated externally.
+        self.player = None
+
 class Table():
     """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
 It also inherently has a dealer who deals the cards to players and manages the pot."""
-    def __init__(self, numberOfSeats, forcedPlay=False):
+    def __init__(self, numberOfSeats):
         self.numberOfSeats = numberOfSeats
-        # dictionary of seats at the poker table (later used for mapping Players to seat numbers)
-        self.seats = dict(map(lambda x: (x + 1, None), range(numberOfSeats)))
-        # forcedPlay says whether players have to play whether they want or not. If true, every player must take a seat (if available) and play
-        self.forcedPlay = forcedPlay
-    def setOfEmptySeats(self):
-        """This will check how many empty seats are there.
-It returns a list of seat numbers, e.g. [2, 3, 5, 8, 9]
-(used when inviting players to the table, etc.)"""
-        emptySeats = set()
-        for seatNumber, player in self.seats.items():
-            if player is None:
-                emptySeats.add(seatNumber)
-        return emptySeats # as a list of seat numbers, e.g. [2, 3, 5, 8, 9]
+        # listof seats at the poker table (later used for mapping Players to seat numbers)
+        self.seat = [Seat(x + 1, None) for x in range(self.numberOfSeats)]
     def listOfPlayersAtTheTable(self):
         """This returns the list of players currently sitting at the table and playing"""
-        listOfPlayersPlayingAtTheTable = list()
-        for seatNumber, player in self.seats.items():
-            if player is not None:
-                listOfPlayersPlayingAtTheTable.append(player)
-        return listOfPlayersPlayingAtTheTable
-    def sortedListOfPlayers(self):
-        # create a list of players sorted according to the seat number they have taken
-        # search for a seat which is not empty, add the player sitting there to the list
-        sortedListOfPlayers = list()
-        for i in range(self.seats.values()):
-            if self.seats[i] is not None:
-                sortedListOfPlayers.append(seats[i])
-        return sortedListOfPlayers
+        #listOfPlayersPlayingAtTheTable = list()
+        return [thisSeat.player for thisSeat in self.seat if thisSeat.player is not None]
+        #for thisSeat in self.seat:
+        #    if thisSeat.player is not None:
+        #        listOfPlayersPlayingAtTheTable.append(thisSeat.player)
+        #return listOfPlayersPlayingAtTheTable
 
+class Requirements():
+    def __init__(self, sessionRequirements):
+        """This will parse one <session> tag in requirement.xml and store the required things in self."""
+        self.sessionRequirements = sessionRequirements
+        # create a game with the given number of hands
+        try:
+            numberOfHandsToPlay = int(self.sessionRequirements.find("game").attrib["hands"])
+        except KeyError:
+            numberOfHandsToPlay = init.numberOfHandsToPlay
+        self.game = Game(numberOfHandsToPlay)
+        # create a table with the given number of seats
+        try:
+            numberOfSeatsAtTable = int(self.sessionRequirements.find("table").attrib["seats"])
+        except KeyError:
+            numberOfSeatsAtTable = init.numberOfSeatsAtTable
+        self.table = Table(numberOfSeatsAtTable)
+        # read or create a set of players
+        self.setOfPlayers = set()
+        try:
+            for player in self.sessionRequirements.find("players"):
+                # if it finds a player, check whether player's name and brain, hand, handType, seat is defined
+                try:
+                    playerName = player.attrib["name"]
+                except KeyError:
+                    playerName = random.sample(init.setOfPlayerNames, 1)[0]
+                try:
+                    forcedToPlay = bool(player.attrib["forcedToPlay"])
+                except KeyError:
+                    forcedToPlay = init.forcedToPlay
+                try:
+                    playerBrain = player.attrib["brain"]
+                except KeyError:
+                    playerBrain = dictionaryOfBrains[init.playerBrain](forcedToPlay)
+                try:
+                    hand = player.attrib["hand"]
+                except KeyError:
+                    hand = ""
+                try:
+                    handType = player.attrib["handType"]
+                except KeyError:
+                    handType = ""
+                try:
+                    seat = int(player.attrib["seat"])
+                except KeyError:
+                    seat = None
+                self.setOfPlayers.add(Player(playerName, playerBrain, requiredCards=hand, requiredHandType=handType, requiredSeat=seat))
+        except:
+            # if no set of players is specified, take the default set of players
+            for playerName in init.setOfPlayerNames:
+                self.setOfPlayers.add(Player(playerName, dictionaryOfBrains[init.playerBrain]()))
 
 ####################
 ## ACTUAL PROGRAM ##
@@ -567,46 +642,13 @@ if __name__ == "__main__":
         tree = ElementTree.parse(init.requiredHands)
         try:
             for session in tree.getroot():
-                # create a game with the given number of hands
-                try:
-                    numberOfHandsToPlay = int(session.find("game").attrib["hands"])
-                except:
-                    numberOfHandsToPlay = init.numberOfHandsToPlay
-                game = Game(numberOfHandsToPlay)
-                # create a table with the given number of seats
-                try:
-                    numberOfSeatsAtTable = int(session.find("table").attrib["seats"])
-                except:
-                    numberOfSeatsAtTable = init.numberOfSeatsAtTable
-                try:
-                    forcedPlay = bool(session.find("table").attrib["forcedPlay"])
-                except:
-                    forcedPlay = init.forcedPlay
-                table = Table(numberOfSeatsAtTable, forcedPlay)
-                # read or create a set of players
-                setOfPlayers = set()
-                try:
-                    for player in session.find("players"):
-                        # if it finds a player, check whether player's name and brain is defined
-                        try:
-                            playerName = player["name"]
-                        except:
-                            playerName = random.sample(init.setOfPlayerNames, 1)[0]
-                        try:
-                            playerBrain = player["brain"]
-                        except:
-                            playerBrain = dictionaryOfBrains[init.playerBrain]()
-                        setOfPlayers.add(Player(playerName, playerBrain))
-                except:
-                    # if no set of players is specified, take the default set of players
-                    for playerName in init.setOfPlayerNames:
-                        setOfPlayers.add(Player(playerName, dictionaryOfBrains[init.playerBrain]()))
-                # create the dealer for the session:
-                dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+                requirements = Requirements(session)
+                # create the dealer for the session as required:
+                dealer = Dealer(deckOfCards, requirements.game, requirements.table, requirements.setOfPlayers)
                 # run the session
                 messenger.transmit(m.aNewRunStarts)
                 dealer.playGame()
-        except:
+        except KeyError:
             # update the name of requirements.xml in the message:
             m.couldNotParseRequirements.whatToTransmit[1] = init.requiredHands
             # transmit a message that you could not parse requirements.xml

@@ -160,6 +160,14 @@ dealerTakesACardFromPlayer = Message(["Dealer takes", "CARD", "from PLAYERNAME"]
 
 couldNotParseRequirements = Message(["Could not parse", "REQUIREMENTS"],
                                     ["Could not parse"], " ", everytime, everywhere)
+
+playerLeavesSeatRequired = Message(["PLAYERNAME leaves seat number", "SEATNUMBER", "because", "ANOTHERPLAYER", "requires it."],
+                                   ["PLAYERNAME leaves seat number"], " ", onlyIfVerbose, everywhere)
+
+noEmptySeatsLeft = Message(["There are no empty seats left.", "PLAYERNAME cannot play."],
+                           ["There are no empty seats left.",
+                            "All seats are taken, cannot invite any more players."], " ", onlyIfVerbose, everywhere)
+
 messenger = Messenger()
 
 if __name__ == "__main__":

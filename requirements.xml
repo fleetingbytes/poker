@@ -2,30 +2,30 @@
 <requirements>
     <session>
         <game hands="3" />
-        <table seats="8" forcedPlay="True" />
+        <table seats="8" />
         <players>
-            <player handType="AKo" />
-            <player handType="TT" />
+            <player name="Tom" handType="AKo" seat="1" forcedToPlay="True" />
+            <player name="Sven" handType="TT" seat="7" forcedToPlay="True" />
             <player />
-            <player hand="C8D7" />
+            <player name="Robert" hand="C8D7" seat="4" forcedToPlay="True" />
             <player />
-            <player hand="HJS8"/>
-            <player />
+            <player name="Penelope" hand="HJS8" forcedToPlay="True" />
+            <player name="Herbert" hand="S4S3" forcedToPlay="True"/>
             <player />
         </players>
     </session>
     <session>
         <game hands="2"/>
-        <table seats="4" forcedPlay="True" />
+        <table seats="4" forcedToPlay="True" />
         <players>
-            <player handType="JTs" />
-            <player handType="22" />
+            <player name="Karl" handType="JTs" forcedToPlay="True" />
+            <player name="Richard" handType="22" forcedToPlay="True" />
             <player />
             <player />
             <player />
             <player />
-            <player hand="H7D3" />
-            <player hand="CKHQ" />
+            <player name="Samantha" hand="H7D3" seat="4" forcedToPlay="True" />
+            <player name="Gwynn" hand="CKHQ" seat="3" forcedToPlay="True" />
         </players>
     </session>
 </requirements>
