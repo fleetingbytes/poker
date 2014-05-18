@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <requirements>
     <session>
-        <game hands="3" />
+        <game type="dealAndCollect" hands="3" />
         <table seats="8" />
         <players>
             <player name="Tom" handType="AKo" seat="1" forcedToPlay="True" />
@@ -15,7 +15,7 @@
         </players>
     </session>
     <session>
-        <game hands="2"/>
+        <game type="dealAndCollect" hands="2" />
         <table seats="4" forcedToPlay="True" />
         <players>
             <player name="Karl" handType="JTs" forcedToPlay="True" />

@@ -11,7 +11,7 @@
 # set path to Python34
 # run a new instance of cmd from the dir of poker.py
 # type "python <winpdb dir>rpdb2.py -pahoj -d poker.py" (password is "ahoj"
-# type 'python "y:\sven\My Dropbox\Dropbox\python\winpdb\rpdb2.py" -pahoj -d poker.py'
+# type 'python "y:\sven\My Dropbox\Dropbox\python\winpdb\rpdb2.py" -pahoj -d poker.py -r requirements.xml -v'
 # we need the following keypress routine in order to attach the script to the winpdb debugger (workaround for a bug in rpdb2.py)
 
 import msvcrt
@@ -20,6 +20,7 @@ msvcrt.getch()
 import argparse, warnings, random, math, copy, inspect
 import init
 import brain
+import game
 import shuffling
 import messenger as m
 from enum import Enum
@@ -42,13 +43,11 @@ class ForgivingFileType(argparse.FileType):
 parser = argparse.ArgumentParser(prog="Poker Pie")
 parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Report internal stuff")
 parser.add_argument("-n", "--nolog", dest="log", action="store_false", default=True, help="Don't log")
-parser.add_argument("-s", "--shuffleOnly", action="store_true", default=False, help="Shuffle only")
 parser.add_argument("-r", "--requirements", dest="requiredHandsFileName", metavar="file", default="", type=str, help="Read requirements from file (default: requirements.xml)")
 args = parser.parse_args()
 
 init.verbose = args.verbose
 init.log = args.log
-init.shuffleOnly = args.shuffleOnly
 init.requiredHands = args.requiredHandsFileName
 
 ## OptionParser will parse command line argumenty
@@ -381,9 +380,8 @@ Right now this is simplified to a given numberOfHands which are played and then 
 
 class Dealer():
     """dealer who runs the game of poker (tells whose turn is it), deals the cards to players and manages the pot at a table."""
-    def __init__(self, deck, game, table, setOfPlayers):
+    def __init__(self, deck, table, setOfPlayers):
         self.deck = deck
-        self.game = game
         self.table = table
         self.setOfPlayers = setOfPlayers
         self.FTPNRAS = list() # of players who are forced to play but do not require any particular seat
@@ -479,71 +477,6 @@ class Dealer():
                 messenger.transmit(m.dealerTakesACardFromPlayer)
         # dealer will later also collect the community cards laid out on the table (a.k.a. 'the board')
         # dealer will later also collect the cards which have been 'burned' before flop, turn, and river.
-    def playAHand(self):
-        # increment the hand counter
-        init.counter["hand"] = init.counter["hand"] + 1
-        # before we type out the number of hand which is being played we update the message:
-        m.aNewHandStarts.whatToTransmit[1] = str(init.counter["hand"])
-        messenger.transmit(m.aNewHandStarts)
-        messenger.transmit(m.shufflingCardsPLACEHOLDER)
-        self.deck.casinoShuffle()
-        messenger.transmit(m.whoIsTheButtonPLACEHOLDER)
-        messenger.transmit(m.placeBlindsPLACEHOLDER)
-        # Dealer deals to the players
-        messenger.transmit(m.dealCardsToPlayersPLACEHOLDER)
-        self.dealCardsToAllPlayers()
-        messenger.transmit(m.preFlopBetPLACEHOLDER)
-        messenger.transmit(m.uncoverFlopPLACEHOLDER)
-        messenger.transmit(m.flopBetPLACEHOLDER)
-        messenger.transmit(m.uncoverTurnPLACEHOLDER)
-        messenger.transmit(m.turnBetPLACEHOLDER)
-        messenger.transmit(m.uncoverRiverPLACEHOLDER)
-        messenger.transmit(m.riverBetPLACEHOLDER)
-        messenger.transmit(m.showdownPLACEHOLDER)
-        messenger.transmit(m.whoIsTheWinnerPLACEHOLDER)
-        messenger.transmit(m.transferPotToWinnerPLACEHOLDER)
-        # dealer collects cards from the players and the table.
-        self.collectAllCards()
-        messenger.transmit(m.collectCardsToDeckPLACEHOLDER)
-    def playGame(self):
-        # update the game counter
-        init.counter["game"] = init.counter["game"] + 1
-        # update the game counter in the message
-        m.playingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
-        # transmit the message that a game is played.
-        messenger.transmit(m.playingGameNumberX)
-        for hand in range(self.game.numberOfHands):
-            # Verbose typeout "Checking whether any players want to join the game."
-            messenger.transmit(m.checkPlayersJoinGame)
-            # Check for empty seats at the table and seat the players.
-            self.invitePlayers()
-            # Check whether there are enough players to play poker (at least 2)
-            if len(self.table.listOfPlayersAtTheTable()) > 1:
-                # play the hand
-                # update the message about how many players want to join a game
-                m.xPlayersPlayAHand.whatToTransmit[0] = str(len(self.table.listOfPlayersAtTheTable()))
-                # transmit the message
-                messenger.transmit(m.xPlayersPlayAHand, positionInWhatToTransmitWhichShouldBeRandomized=1)
-                self.playAHand()
-                messenger.transmit(m.checkPlayersLeaveGame)
-                self.letPlayersGo()
-            # otherwise the last remaining player will leave the table. (This mustn't be elif!)
-            if len(self.table.listOfPlayersAtTheTable()) == 1:
-                # we will tell his brain that he wants to leave the table
-                self.table.listOfPlayersAtTheTable()[0].brain.wantToLeaveTheTable = True
-                # update the player's name in the message
-                m.lastPlayerHasLeft.updatePlayerName(self.table.listOfPlayersAtTheTable()[0])
-                # transmit the message that the player has left the table
-                messenger.transmit(m.lastPlayerHasLeft)
-                self.letPlayersGo()
-            # otherwise the game is over (This mustn't be elif!)
-            if len(self.table.listOfPlayersAtTheTable()) == 0:
-                break
-        # reset the hand counter
-        init.counter["hand"] = 0
-        # update the game counter in the message
-        m.endingGameNumberX.whatToTransmit[1] = str(init.counter["game"])
-        messenger.transmit(m.endingGameNumberX)
 
 class Seat():
     """A seat will keep track of the players who are interested in taking it.
@@ -576,12 +509,15 @@ class Requirements():
     def __init__(self, sessionRequirements):
         """This will parse one <session> tag in requirement.xml and store the required things in self."""
         self.sessionRequirements = sessionRequirements
-        # create a game with the given number of hands
+        # read out the game creation parameters
         try:
-            numberOfHandsToPlay = int(self.sessionRequirements.find("game").attrib["hands"])
+            self.typeOfGame = self.sessionRequirements.find("game").attrib["type"]
         except KeyError:
-            numberOfHandsToPlay = init.numberOfHandsToPlay
-        self.game = Game(numberOfHandsToPlay)
+            self.typeOfGame = init.gameType
+        try:
+            self.numberOfHandsToPlay = int(self.sessionRequirements.find("game").attrib["hands"])
+        except KeyError:
+            self.numberOfHandsToPlay = init.numberOfHandsToPlay
         # create a table with the given number of seats
         try:
             numberOfSeatsAtTable = int(self.sessionRequirements.find("table").attrib["seats"])
@@ -632,6 +568,7 @@ if __name__ == "__main__":
     deckOfCards = Deck()
     # create a dictionary of brains
     dictionaryOfBrains = dict(inspect.getmembers(brain, predicate=inspect.isclass))
+    dictionaryOfGames = dict(inspect.getmembers(game, predicate=inspect.isclass))
     if init.shuffleOnly:
         # shuffle the deck
         deckOfCards.casinoShuffle()
@@ -644,10 +581,12 @@ if __name__ == "__main__":
             for session in tree.getroot():
                 requirements = Requirements(session)
                 # create the dealer for the session as required:
-                dealer = Dealer(deckOfCards, requirements.game, requirements.table, requirements.setOfPlayers)
+                dealer = Dealer(deckOfCards, requirements.table, requirements.setOfPlayers)
+                # create the game
+                game = dictionaryOfGames[requirements.typeOfGame](requirements.typeOfGame, requirements.numberOfHandsToPlay, dealer)
                 # run the session
                 messenger.transmit(m.aNewRunStarts)
-                dealer.playGame()
+                game.play()
         except KeyError:
             # update the name of requirements.xml in the message:
             m.couldNotParseRequirements.whatToTransmit[1] = init.requiredHands
@@ -674,7 +613,7 @@ if __name__ == "__main__":
         table = Table(numberOfSeats)
         
         # create a dealer and give him the deck of cards.
-        dealer = Dealer(deckOfCards, game, table, setOfPlayers)
+        dealer = Dealer(deckOfCards, table, setOfPlayers)
         
         # run the game
         messenger.transmit(m.aNewRunStarts)
