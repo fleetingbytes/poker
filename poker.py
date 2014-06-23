@@ -250,7 +250,7 @@ class Deck():
         halves = dict(zip([False, True], [upperHalf, lowerHalf]))
         # riffle the cards according to the pattern
         riffledCards = list()
-        for n, b in pattern:
+        for n, b in pattern: # n is the number of cards to be dropped, b is the bool [True, False] designating the lower or upper deck half
             for counter in range(n):
                 riffledCards.append(halves[b].pop())
         self.cards = riffledCards
@@ -334,28 +334,57 @@ class Deck():
                 cardsToSkipAtTheBeginningOfLoadedDeck = cardsToSkipAtTheBeginningOfLoadedDeck + cardsToDecode
         self.cards = loadedDeck
 
+class HandRank(Enum):
+    royalFlush = (9, "a", "royal flush")
+    straightFlush = (8, "a", "straight flush")
+    fourOfAKind = (7, "", "four of a kind")
+    fullHouse = (6, "a", "full house")
+    flush = (5, "a", "flush")
+    straight = (4, "a", "straight")
+    threeOfAKind = (3, "", "three of a kind")
+    twoPair = (2, "", "two pair")
+    pair = (1, "a", "pair")
+    highCard = (0, "a", "high card")
+    def __init__(self, rankNumber, article, rankName):
+        self.rankNumber = rankNumber
+        self.article = article
+        self.rankName = rankName
+        self.typeout = self.article + " " + self.rankName
+    def __hash__(self):
+        return self.value
+    def __eq__(self, other):
+        return self.value == other.value
+    def __ne__(self, other):
+        return self.value != other.value
+    def __gt__(self, other):
+        return self.value > other.value
+    def __ge__(self, other):
+        return self.value >= other.value
+    def __lt__(self, other):
+        return self.value < other.value
+    def __le__(self, other):
+        return self.value <= other.value
+
 class Player():
     def __init__(self, playerName, brain, requiredCards="", requiredHandType="", requiredSeat=None):
         self.name = playerName
         self.brain = brain
-        self.cards = set()
+        self.cards = CardGroup(set())
         self.requiredCards = requiredCards
         self.requiredHandType = requiredHandType
         try:
             self.requiredSeat = requiredSeat - 1 # we subtract one from the seat number because list of seats starts with 0
         except TypeError:
             self.requiredSeat = requiredSeat
-    def receiveCard(self, card):
-            self.cards.add(card)
-    def pocketCards(self):
+    def XpocketCards(self):
         # this returns the cards in a list ordered by the cards' value
         return sorted(self.cards, key = lambda card: (card.value.value, card.color.value), reverse = True)
-    def typePocketCards(self, parameter="short"):
+    def XtypePocketCards(self, parameter="short"):
         return self.pocketCards()[0](parameter) + self.pocketCards()[1](parameter)
-    def pocketPair(self):
+    def XpocketPair(self):
         """returns True if cards are pocket pair, else: False"""
         return self.pocketCards()[0].value == self.pocketCards()[1].value
-    def suitedCards(self):
+    def XsuitedCards(self):
         """returns True if cards are suited, False if off-suite"""
         return self.pocketCards()[0].color == self.pocketCards()[1].color
 
@@ -379,10 +408,11 @@ Right now this is simplified to a given numberOfHands which are played and then 
 
 class Dealer():
     """dealer who runs the game of poker (tells whose turn is it), deals the cards to players and manages the pot at a table."""
-    def __init__(self, deck, table, setOfPlayers):
+    def __init__(self, deck, table, setOfPlayers, handRank):
         self.deck = deck
         self.table = table
         self.setOfPlayers = setOfPlayers
+        self.handRank = handRank
         self.FTPNRAS = list() # of players who are forced to play but do not require any particular seat
         self.WTPNRASNFTP = list() # of players who want to play, do not require any particular seat and are not forced to play
     def invitePlayers(self):
@@ -453,7 +483,7 @@ class Dealer():
         # update the message about the dealer giving this player this card.
         m.dealerGivesPlayerACard.whatToTransmit[1] = self.deck.cards[-1]()
         # take the first card from the deck and give it to the player
-        player.receiveCard(self.deck.pop())
+        player.cards.add(self.deck.pop())
         # update the player's name in the message
         m.dealerGivesPlayerACard.updatePlayerName(player)
         # transmit the message
@@ -466,7 +496,8 @@ class Dealer():
     def collectAllCards(self):
         # After each hand the dealer collects all cards from the players.
         for player in self.table.listOfPlayersAtTheTable():
-            while player.cards:
+            # collect cards from the players
+            while player.cards():
                 self.deck.cards.append(player.cards.pop())
                 # update the player name in the message
                 m.dealerTakesACardFromPlayer.updatePlayerName(player)
@@ -474,8 +505,34 @@ class Dealer():
                 m.dealerTakesACardFromPlayer.whatToTransmit[1] = self.deck.cards[-1]()
                 # transmit the message
                 messenger.transmit(m.dealerTakesACardFromPlayer)
-        # dealer will later also collect the community cards laid out on the table (a.k.a. 'the board')
-        # dealer will later also collect the cards which have been 'burned' before flop, turn, and river.
+        # collect cards from the table
+        cardLocations = (self.table.flop, self.table.turn, self.table.river, self.table.burn)
+        for location in cardLocations:
+            while location():
+                self.deck.cards.append(location.pop())
+    def burnACard(self):
+        self.table.burn.add(self.deck.pop())
+    def dealFlop(self, parameter="short"):
+        self.burnACard()
+        self.table.flop.update((self.deck.pop(), self.deck.pop(), self.deck.pop()))
+        # update the flop in the message
+        m.flop.whatToTransmit[1] = self.table.flop.typeOut(parameter=parameter, separator=" ")
+        # transmit the message
+        messenger.transmit(m.flop)
+    def dealTurn(self, parameter="short"):
+        self.burnACard()
+        self.table.turn.add(self.deck.pop())
+        # update the flop in the message
+        m.turn.whatToTransmit[1] = self.table.turn.typeOut(parameter=parameter, separator=" ")
+        # transmit the message
+        messenger.transmit(m.turn)
+    def dealRiver(self, parameter="short"):
+        self.burnACard()
+        self.table.river.add(self.deck.pop())
+        # update the flop in the message
+        m.river.whatToTransmit[1] = self.table.river.typeOut(parameter=parameter, separator=" ")
+        # transmit the message
+        messenger.transmit(m.river)
 
 class Seat():
     """A seat will keep track of the players who are interested in taking it.
@@ -488,6 +545,70 @@ class Seat():
         # [list of players who want to play, do not require any particular seat and are not forced to play] will not be stored in any seat since it is the same list for every seat. This list will be generated externally.
         self.player = None
 
+class CardGroup():
+    """A CardGroup is an type which can be used to create Flop, Turn, River and the Burn cards on the table and the Players' pocket cards."""
+    def __init__(self, setOfCards):
+        self.cards = setOfCards
+        # function aliases
+        self.add = self.cards.add
+        self.pop = self.cards.pop
+        self.update = self.cards.update
+        self.tupleOfColors = (CardColor.spades, CardColor.hearts, CardColor.diamonds, CardColor.clubs)
+    def __call__(self):
+        return self.cards
+    def __iter__(self):
+        return iter(self.cards)
+    def typeOut(self, parameter="short", separator=" "):
+        return separator.join([card(parameter) for card in self.cards])
+    def sortedListOfCards(self):
+        return sorted(self.cards, key = lambda card: (card.value.value, card.color.value), reverse = True)
+    def sortedTypeOut(self, separator=" ", parameter="short"):
+        # this returns the cards in a list ordered by the cards' value
+        return separator.join(card(parameter) for card in self.sortedListOfCards())
+    def detectFlush(self, requiredCards):
+        # Check whether a flush is possible (board needs 3 cards of one color)
+        colorCount = dict(zip(self.tupleOfColors, map(lambda x: 0, range(len(self.tupleOfColors)))))
+        for card in self.cards:
+            colorCount[card.color] = colorCount[card.color] + 1
+        return max(colorCount.values()) >= requiredCards
+    def possibleStraight(self):
+        # create a 14-bit number (boardNumber), each digit representing the presence of a certain card value in the board. 
+        # Ace will set the 1st and 14th bit to 1 as it can be above the king or below the deuce.
+        # then we create a 5-bit long window through which we will bitshift the 14-bit number and see if at least 3 bits in this window are 1
+        boardNumber = 0
+        for card in self.cards:
+            boardNumber = boardNumber or (1 << card.value.value - 1)
+        # if the board contains an ace (value 14)
+        if boardNumber >> 13:
+            # set the first bit (representing an ace below deuce) to 1 as well
+            boardNumber = boardNumber + 1
+        window = 31 # 31 = 0b11111
+        possibleStraight = False
+        counter = -1
+        while not possibleStraight and counter < 10:
+            counter = counter + 1
+            # a straight is possible if the bits in the window are in any of the following configurations:
+            # 3-cards patterns
+            # 00111 = 7
+            # 01011 = 11
+            # 01101 = 13
+            # 01110 = 14
+            # 10011 = 19
+            # 10101 = 21
+            # 10110 = 22
+            # 11010 = 26
+            # 11100 = 28
+            # 4-card patterns
+            # 01111 = 15
+            # 10111 = 23
+            # 11011 = 27
+            # 11101 = 29
+            # 11110 = 30
+            # 5-card pattern
+            # 11111 = 31
+            possibleStraight = ((boardNumber >> counter) and window) in set([7, 11, 13, 14, 19, 21, 22, 26, 28, 15, 23, 27, 29, 30, 31])
+        return possibleStraight
+
 class Table():
     """A table has a limited number of seats for the players and it holds the community cards, a.k.a. 'the board'.
 It also inherently has a dealer who deals the cards to players and manages the pot."""
@@ -495,6 +616,14 @@ It also inherently has a dealer who deals the cards to players and manages the p
         self.numberOfSeats = numberOfSeats
         # listof seats at the poker table (later used for mapping Players to seat numbers)
         self.seat = [Seat(x + 1, None) for x in range(self.numberOfSeats)]
+        self.flop = CardGroup(set())
+        self.turn = CardGroup(set())
+        self.river = CardGroup(set())
+        self.burn = CardGroup(set())
+    def board(self):
+        return CardGroup(set.union(self.flop.cards, self.turn.cards, self.river.cards))
+    def boardAndPocketCards(self, player):
+        return CardGroup(set.union(self.flop.cards, self.turn.cards, self.river.cards, player.cards))
     def listOfPlayersAtTheTable(self):
         """This returns the list of players currently sitting at the table and playing"""
         #listOfPlayersPlayingAtTheTable = list()
@@ -576,12 +705,13 @@ if __name__ == "__main__":
             for session in tree.getroot():
                 requirements = Requirements(session)
                 # create the dealer for the session as required:
-                dealer = Dealer(deckOfCards, requirements.table, requirements.setOfPlayers)
+                dealer = Dealer(deckOfCards, requirements.table, requirements.setOfPlayers, HandRank)
                 # create the game
                 game = dictionaryOfGames[requirements.typeOfGame](requirements.typeOfGame, requirements.numberOfHandsToPlay, dealer)
                 # run the session
                 messenger.transmit(m.aNewRunStarts)
                 game.play()
+                messenger.transmit(m.aRunEnds)
         except KeyError:
             # update the name of requirements.xml in the message:
             m.couldNotParseRequirements.whatToTransmit[1] = init.requiredHands

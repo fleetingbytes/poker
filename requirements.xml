@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <requirements>
     <session>
-        <game type="comparePocketCards" hands="11492" />
+        <game type="allPlayersAllIn" hands="4" />
         <table seats="8" />
         <players>
             <player />

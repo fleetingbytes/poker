@@ -74,6 +74,8 @@ everytime = False # message will be typed everytime (as long as messages are ena
 
 aNewRunStarts = Message(["TO BE REPLACED BY A NEWLINE", "____", "TIMESTAMP", "Program starts"], 
                         [""], "\n", everytime, everywhere)
+aRunEnds = Message(["TO BE REPLACED BY A NEWLINE", "____", "TIMESTAMP", "Program ends"], 
+                   [""], "\n", everytime, everywhere)
 aNewHandStarts = Message(["Starting hand number ", "NUMBER", "."],
                          ["Starting hand number "], "", everytime, everywhere)
 
@@ -167,6 +169,24 @@ playerLeavesSeatRequired = Message(["PLAYERNAME leaves seat number", "SEATNUMBER
 noEmptySeatsLeft = Message(["There are no empty seats left.", "PLAYERNAME cannot play."],
                            ["There are no empty seats left.",
                             "All seats are taken, cannot invite any more players."], " ", onlyIfVerbose, everywhere)
+
+flop = Message(["Flop is ", "CARDS", "."],
+               ["Flop is ", "Flop comes "], "", everytime, everywhere)
+
+turn = Message(["Turn is ", "CARDS", "."],
+               ["Turn is ", "Turn comes "], "", everytime, everywhere)
+
+river = Message(["River is ", "CARDS", "."],
+                ["River is ", "River comes "], "", everytime, everywhere)
+
+possibleFlush = Message(["Flush is possible."],
+                       ["Flush is possible.", "Possible flush."], "", onlyIfVerbose, everywhere)
+
+possibleStraight = Message(["Straight is possible."],
+                           ["Straight is possible.", "Possible straight."], "", onlyIfVerbose, everywhere)
+
+playerHasMadeX = Message(["PLAYERNAME has made ", "HANDRANK", "."],
+                         ["PLAYERNAME has made "], "", everytime, everywhere)
 
 messenger = Messenger()
 
